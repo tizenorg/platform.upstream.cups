@@ -1,389 +1,454 @@
-#
-# "$Id: cups.spec.in 10428 2012-04-23 17:46:53Z mike $"
-#
-#   RPM "spec" file for CUPS.
-#
-#   Original version by Jason McMullan <jmcc@ontv.com>.
-#
-#   Copyright 2007-2012 by Apple Inc.
-#   Copyright 1999-2007 by Easy Software Products, all rights reserved.
-#
-#   These coded instructions, statements, and computer programs are the
-#   property of Apple Inc. and are protected by Federal copyright
-#   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
-#   which should have been included with this file.  If this file is
-#   file is missing or damaged, see the license at "http://www.cups.org/".
-#
-
-# Conditional build options (--with name/--without name):
-#
-#   dbus     - Enable/disable DBUS support (default = enable)
-#   dnssd    - Enable/disable DNS-SD support (default = disable)
-#   php      - Enable/disable PHP support (default = enable)
-#   static   - Enable/disable static libraries (default = enable)
-
-%{!?_with_dbus: %{!?_without_dbus: %define _with_dbus --with-dbus}}
-%{?_with_dbus: %define _dbus --enable-dbus}
-%{!?_with_dbus: %define _dbus --disable-dbus}
-
-%{!?_with_dnssd: %{!?_without_dnssd: %define _with_dnssd --with-dnssd}}
-%{?_with_dnssd: %define _dnssd --enable-dnssd}
-%{!?_with_dnssd: %define _dnssd --disable-dnssd}
-
-%{!?_with_php: %{!?_without_php: %define _with_php --with-php}}
-%{?_with_php: %define _php --with-php}
-%{!?_with_php: %define _php --without-php}
-
-%{!?_with_static: %{!?_without_static: %define _without_static --without-static}}
-%{?_with_static: %define _static --enable-static}
-%{!?_with_static: %define _static --disable-static}
-
-Summary: CUPS
-Name: cups
-Version: 1.5.3
-Release: 1
-Epoch: 1
-License: GPL
-Group: System Environment/Daemons
-Source: http://ftp.easysw.com/pub/cups/1.5.3/cups-1.5.3-source.tar.bz2
-Url: http://www.cups.org
-Packager: Anonymous <anonymous@foo.com>
-Vendor: Apple Inc.
-
-# Use buildroot so as not to disturb the version already installed
-BuildRoot: /tmp/%{name}-root
-
-# Dependencies...
-Requires: %{name}-libs = %{epoch}:%{version}
-Obsoletes: lpd, lpr, LPRng
-Provides: lpd, lpr, LPRng
-Obsoletes: cups-da, cups-de, cups-es, cups-et, cups-fi, cups-fr, cups-he
-Obsoletes: cups-id, cups-it, cups-ja, cups-ko, cups-nl, cups-no, cups-pl
-Obsoletes: cups-pt, cups-ru, cups-sv, cups-zh
-
-%package devel
-Summary: CUPS - development environment
-Group: Development/Libraries
-Requires: %{name}-libs = %{epoch}:%{version}
-
-%package libs
-Summary: CUPS - shared libraries
-Group: System Environment/Libraries
-Provides: libcups1
-
-%package lpd
-Summary: CUPS - LPD support
-Group: System Environment/Daemons
-Requires: %{name} = %{epoch}:%{version} xinetd
-
-%if %{?_with_php:1}%{!?_with_php:0}
-%package php
-Summary: CUPS - PHP support
-Group: Development/Languages
-Requires: %{name}-libs = %{epoch}:%{version}
-%endif
+Name:           cups
+#BuildRequires:  avahi-compat-mDNSResponder-devel
+BuildRequires:  pkgconfig(dbus-1)
+BuildRequires:  fdupes
+BuildRequires:  gcc-c++
+BuildRequires:  libjpeg8-devel
+BuildRequires:  libpng-devel
+BuildRequires:  libtiff-devel
+BuildRequires:  openssl-devel
+BuildRequires:  pam-devel
+BuildRequires:  pkgconfig
+BuildRequires:  update-desktop-files
+BuildRequires:  zlib-devel
+# Have libtool as explicit buildrequirement to no longer depend
+# on a "hidden" buildrequirement in the OBS project definition:
+BuildRequires:  libtool
+BuildRequires:  systemd-devel
+%{?systemd_requires}
+%define have_systemd 1
+Requires(pre):         /usr/sbin/groupadd
+Url:            http://www.cups.org/
+Summary:        The Common UNIX Printing System
+License:        GPL-2.0+ ; LGPL-2.1+
+Group:          Hardware/Printing
+# Source0...Source9 is for sources from upstream:
+# URL for Source0: http://ftp.easysw.com/pub/cups/1.5.3/cups-1.5.3-source.tar.bz2
+# MD5 sum for Source0 on http://www.cups.org/software.php e1ad15257aa6f162414ea3beae0c5df8
+Version:        1.5.3
+Release:        0
+Source0:        cups-%{version}-source.tar.bz2
+# Require the exact matching version-release of the cups-libs sub-package because
+# non-matching CUPS libraries may let CUPS software crash (e.g. segfault)
+# because all CUPS software is built from the one same CUPS source tar ball
+# so that there are CUPS-internal dependencies via CUPS private API calls
+# (which do not happen for third-party software which uses only the CUPS public API).
+# The exact matching version-release of the cups-libs sub-package is available
+# on the same package repository where the cups package is because
+# all are built simulaneously from the same cups source package
+# and all required packages are provided on the same repository:
+Requires:       cups-libs = %{version}-%{release}
+Requires:       cups-client = %{version}
+# Inherited RPM Requires from the past but I (jsmeix@suse.de) do not know the reason for it:
+Requires:       util-linux
+Source102:      postscript.ppd.bz2
+Source103:      cups.sysconfig
+Source105:      PSLEVEL1.PPD.bz2
+Source106:      PSLEVEL2.PPD.bz2
+Source108:      cups-client.conf
+Source109:      baselibs.conf
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
-CUPS is the standards-based, open source printing system developed by
-Apple Inc. for OS X and other UNIX®-like operating systems.
+The Common UNIX Printing System (CUPS) is the
+standards-based, open source printing system.
 
-%description devel
-This package provides the CUPS headers and development environment.
+See http://www.cups.org
+
+
+%package libs
+Summary:        Libraries for CUPS
+License:        GPL-2.0+ ; LGPL-2.1+
+Group:          Hardware/Printing
 
 %description libs
-This package provides the CUPS shared libraries.
+The Common UNIX Printing System (CUPS) is the
+standards-based, open source printing system.
 
-%description lpd
-This package provides LPD client support.
+See http://www.cups.org
 
-%if %{?_with_php:1}%{!?_with_php:0}
-%description php
-This package provides PHP support for CUPS.
-%endif
+This package contains libraries needed by CUPS
+and other packages.
+
+
+%package client
+Summary:        CUPS Client Programs
+License:        GPL-2.0+
+Group:          Hardware/Printing
+Requires:       cups-libs = %{version}-%{release}
+
+%description client
+The Common UNIX Printing System (CUPS) is the
+standards-based, open source printing system.
+
+See http://www.cups.org
+
+This package contains all programs needed
+for running a CUPS client, not a server.
+
+
+%package devel
+Summary:        Development Environment for CUPS
+License:        GPL-2.0+
+Group:          Development/Libraries/C and C++
+# Do not require the exact matching version-release of cups-libs
+# but only a cups-libs package with matching version because
+# for building third-party software which uses only the CUPS public API
+# there are no CUPS-internal dependencies via CUPS private API calls
+# (the latter would require the exact matching cups-libs version-release):
+Requires:       cups-libs = %{version}
+Requires:       glibc-devel
+
+%description devel
+The Common UNIX Printing System (CUPS) is the
+standards-based, open source printing system.
+
+See http://www.cups.org
+
+This is the development package.
+
+
+%package ddk
+Summary:        CUPS Driver Development Kit
+License:        GPL-2.0+
+Group:          Hardware/Printing
+Requires:       cups = %{version}
+Requires:       cups-devel = %{version}
+# Since CUPS 1.4 the CUPS Driver Development Kit (DDK) is bundled with CUPS.
+# For CUPS 1.2.x and 1.3.x, the DDK was separated software
+# which we provided (up to openSUSE 11.1 / SLE11) in our cupsddk package:
+Provides:       cupsddk = %{version}
+Obsoletes:      cupsddk < %{version}
+
+%description ddk
+The Common UNIX Printing System (CUPS) is the
+standards-based, open source printing system.
+
+See http://www.cups.org
+
+The CUPS Driver Development Kit (DDK) provides
+a suite of standard drivers, a PPD file compiler,
+and other utilities that can be used to develop
+printer drivers for CUPS.
+
 
 %prep
-%setup
+# Be quiet when unpacking:
+%setup -q -n cups-%{version}
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" LDFLAGS="$RPM_OPT_FLAGS" \
-    ./configure %{_dbus} %{_dnssd} %{_php} %{_static}
-# If we got this far, all prerequisite libraries must be here.
-make
+# Disable SILENT run of make so that make runs verbose as usual:
+sed -i -e 's/^\.SILENT:/# .SILENT:/' Makedefs.in
+libtoolize --force
+aclocal
+autoconf
+export CXXFLAGS="$CXXFLAGS $RPM_OPT_FLAGS -O2 -fstack-protector"
+export CFLAGS="$RPM_OPT_FLAGS -fstack-protector -DLDAP_DEPRECATED"
+export CXX=g++
+# As long as cups-1.4.3-default-webcontent-path.patch is applied
+# configure --with-docdir=... would be no longer needed
+# because cups-1.4.3-default-webcontent-path.patch changes the
+# default with-docdir path whereto the web content is installed
+# from /usr/share/doc/cups to /usr/share/cups/webcontent because the
+# files of the CUPS web content are no documentation, see CUPS STR #3578
+# and http://bugzilla.novell.com/show_bug.cgi?id=546023#c6 and subsequent comments
+# so that the new default could be used as is but upstream may accept
+# cups-1.4.3-default-webcontent-path.patch in general but change its default
+# so that with-docdir is explicitly set here to be future proof:
+./configure \
+	--mandir=%{_mandir} \
+	--sysconfdir=%{_sysconfdir} \
+	--libdir=%{_libdir} \
+	--datadir=%{_datadir} \
+	--with-docdir=%{_datadir}/cups/webcontent \
+	--with-cups-user=lp \
+	--with-cups-group=lp \
+	--enable-debug \
+	--enable-relro \
+	--enable-gssapi \
+	--disable-static \
+	--without-rcdir \
+	--enable-dbus \
+	--enable-ldap \
+	--with-java \
+	--with-php \
+	--with-python \
+	--with-cachedir=/var/cache/cups \
+	--with-pdftops=/usr/bin/pdftops \
+%if 0%{?have_systemd}
+	--with-systemdsystemunitdir=%{_unitdir} \
+%endif
+	--prefix=/
+make %{?_smp_mflags} CXX=g++
 
 %install
-# Make sure the RPM_BUILD_ROOT directory exists.
-rm -rf $RPM_BUILD_ROOT
-
 make BUILDROOT=$RPM_BUILD_ROOT install
+# Use Ghostscript fonts instead of CUPS fonts:
+rm -r $RPM_BUILD_ROOT/usr/share/cups/fonts
+mkdir -p $RPM_BUILD_ROOT/usr/share/ghostscript/fonts
+ln -sf /usr/share/ghostscript/fonts $RPM_BUILD_ROOT/usr/share/cups/
+# Make directory for ssl files:
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cups/ssl
+# Add a client.conf as template (Source108: cups-client.conf):
+install -m644 %{SOURCE108} $RPM_BUILD_ROOT%{_sysconfdir}/cups/client.conf
+# Make the libraries accessible also via generic named links:
+ln -sf libcupsimage.so.2 $RPM_BUILD_ROOT%{_libdir}/libcupsimage.so
+ln -sf libcups.so.2 $RPM_BUILD_ROOT%{_libdir}/libcups.so
+# Add missing usual directories:
+install -d -m755 $RPM_BUILD_ROOT%{_datadir}/cups/drivers
+install -d -m755 $RPM_BUILD_ROOT/var/cache/cups
+# Add conf/pam.suse regarding support for PAM (see Patch100: cups-pam.diff):
+install -m 644 -D conf/pam.suse $RPM_BUILD_ROOT/etc/pam.d/cups
+# Add missing usual documentation:
+install -d -m755 $RPM_BUILD_ROOT/%{_defaultdocdir}/cups
+for f in CHANGES*.txt CREDITS.txt INSTALL.txt LICENSE.txt README.txt
+do install -m 644 "$f" $RPM_BUILD_ROOT%{_defaultdocdir}/cups/
+done
+# Source102: postscript.ppd.bz2
+bzip2 -cd < %{SOURCE102} > $RPM_BUILD_ROOT%{_datadir}/cups/model/Postscript.ppd
+# Source105: PSLEVEL1.PPD.bz2
+bzip2 -cd < %{SOURCE105} > $RPM_BUILD_ROOT%{_datadir}/cups/model/Postscript-level1.ppd
+# Source106: PSLEVEL2.PPD.bz2
+bzip2 -cd < %{SOURCE106} > $RPM_BUILD_ROOT%{_datadir}/cups/model/Postscript-level2.ppd
+find %{buildroot}/usr/share/cups/model -name "*.ppd" | while read FILE
+do # Change default paper size from Letter to A4 if possible
+   # https://bugzilla.novell.com/show_bug.cgi?id=suse30662
+   # and delete trailing whitespace:
+   perl -pi -e 's:^(\*Default.*)Letter\s*$:$1A4\n:; \
+                s:^(\*ImageableArea A4.*\:\s+)"0 0 595 842":$1"24 48 571 818":; \
+                s:^(\*ImageableArea Letter.*\:\s+)"0 0 612 792":$1"24 48 588 768":; \
+                s:\s\n:\n:' "$FILE"
+   gzip -9 "$FILE"
+done
+# Add files for desktop menu:
+rm -f $RPM_BUILD_ROOT/usr/share/applications/cups.desktop
+%tizen_update_desktop_file -i cups PrintingUtility 2>/dev/null
+mkdir $RPM_BUILD_ROOT/usr/share/pixmaps
+install -m 644 $RPM_BUILD_ROOT/usr/share/icons/hicolor/64x64/apps/cups.png $RPM_BUILD_ROOT/usr/share/pixmaps
+rm -rf $RPM_BUILD_ROOT/usr/share/icons
+# Remove unpackaged files:
+rm -rf $RPM_BUILD_ROOT/%{_mandir}/es/cat?
+rm -rf $RPM_BUILD_ROOT/%{_mandir}/fr/cat?
+rm -rf $RPM_BUILD_ROOT/%{_mandir}/cat?
+# Norwegian is "nb", "zh" is probablyx "zh_CN"
+mv $RPM_BUILD_ROOT/usr/share/locale/{no,nb}
+mv $RPM_BUILD_ROOT/usr/share/locale/{zh,zh_CN}
+# Run fdupes:
+%fdupes $RPM_BUILD_ROOT
 
-%post
-/sbin/chkconfig --add cups
-/sbin/chkconfig cups on
+%pre
+/usr/sbin/groupadd -g 71 -o -r ntadmin 2>/dev/null || :
 
-# Restart cupsd if we are upgrading...
-if test $1 -gt 1; then
-	/sbin/service cups stop
-	/sbin/service cups start
-fi
+%post libs -p /sbin/ldconfig
 
-%post libs
-/sbin/ldconfig
-
-%preun
-if test $1 = 0; then
-	/sbin/service cups stop
-	/sbin/chkconfig --del cups
-fi
-
-%postun
-if test $1 -ge 1; then
-	/sbin/service cups stop
-	/sbin/service cups start
-fi
-
-%postun libs
-/sbin/ldconfig
-
-%clean
-rm -rf $RPM_BUILD_ROOT
+%postun libs -p /sbin/ldconfig
 
 %files
-%docdir /usr/share/doc/cups
+# The files sections list all mandatory files explicitly one by one.
+# In particular all executables are listed explicitly.
+# This avoids that CUPS' configure magic might silently
+# not build and install an executable when whatever condition
+# for configure's automated tests is not fulfilled in the build system.
+# See https://bugzilla.novell.com/show_bug.cgi?id=526847#c9
+# (In CUPS 1.3.10 a configure magic did silently skip to build
+#  the pdftops filter when there was no /usr/bin/pdftops
+#  installed in the build system regardless of an explicite
+#  configure setting '--with-pdftops=/usr/bin/pdftops',
+#  see also http://www.cups.org/str.php?L3278).
+# When all mandatory files are explicitly listed,
+# the build fails intentionally if a mandatory file was not built
+# which ensures that already existing correctly built binary RPMs
+# are not overwritten by broken RPMs where mandatory files are missing.
 %defattr(-,root,root)
-%dir /etc/cups
-%config(noreplace) /etc/cups/*.conf
-/etc/cups/cupsd.conf.default
-%dir /etc/cups/interfaces
-%dir /etc/cups/ppd
-%attr(0700,root,root) %dir /etc/cups/ssl
-
-%if %{?_with_dbus:1}%{!?_with_dbus:0}
-# DBUS
-/etc/dbus-1/system.d/*
-%endif
-
-# PAM
-%dir /etc/pam.d
-/etc/pam.d/*
-
-# RC dirs are a pain under Linux...  Uncomment the appropriate ones if you
-# don't use Red Hat or Mandrake...
-
-/etc/init.d/*
-/etc/rc0.d/*
-/etc/rc2.d/*
-/etc/rc3.d/*
-/etc/rc5.d/*
-
-# OLD RedHat/Mandrake
-#/etc/rc.d/init.d/*
-#/etc/rc.d/rc0.d/*
-#/etc/rc.d/rc2.d/*
-#/etc/rc.d/rc3.d/*
-#/etc/rc.d/rc5.d/*
-
-#/sbin/rc.d/*
-#/sbin/rc.d/rc0.d/*
-#/sbin/rc.d/rc2.d/*
-#/sbin/rc.d/rc3.d/*
-#/sbin/rc.d/rc5.d/*
-
-/usr/bin/cancel
-/usr/bin/cupstestdsc
-/usr/bin/cupstestppd
-/usr/bin/ipptool
-/usr/bin/lp*
+%config(noreplace) %attr(640,root,lp) %{_sysconfdir}/cups/cupsd.conf
+%{_sysconfdir}/cups/cupsd.conf.default
+%config(noreplace) %attr(640,root,lp) %{_sysconfdir}/cups/snmp.conf
+%config(noreplace) %attr(755,lp,lp) %{_sysconfdir}/cups/interfaces
+%config %{_sysconfdir}/pam.d/cups
+%config %{_sysconfdir}/dbus-1/system.d/cups.conf
+%dir %attr(700,root,lp) %{_sysconfdir}/cups/ssl
+%dir %attr(755,root,lp) %{_sysconfdir}/cups/ppd
+%{_bindir}/cupstestppd
+%{_sbindir}/cupsaddsmb
+%{_sbindir}/cupsctl
+%{_sbindir}/cupsd
+%{_sbindir}/cupsfilter
+%{_sbindir}/rccups
 %dir /usr/lib/cups
 %dir /usr/lib/cups/backend
-%if %{?_with_dnssd:1}%{!?_with_dnssd:0}
-/usr/lib/cups/backend/dnssd
-%endif
 /usr/lib/cups/backend/http
 /usr/lib/cups/backend/https
-%attr(0700,root,root) /usr/lib/cups/backend/ipp
+/usr/lib/cups/backend/ipp
 /usr/lib/cups/backend/ipps
-%attr(0700,root,root) /usr/lib/cups/backend/lpd
+/usr/lib/cups/backend/lpd
 /usr/lib/cups/backend/parallel
 /usr/lib/cups/backend/serial
 /usr/lib/cups/backend/snmp
 /usr/lib/cups/backend/socket
 /usr/lib/cups/backend/usb
 %dir /usr/lib/cups/cgi-bin
-/usr/lib/cups/cgi-bin/*
+/usr/lib/cups/cgi-bin/admin.cgi
+/usr/lib/cups/cgi-bin/classes.cgi
+/usr/lib/cups/cgi-bin/help.cgi
+/usr/lib/cups/cgi-bin/jobs.cgi
+/usr/lib/cups/cgi-bin/printers.cgi
 %dir /usr/lib/cups/daemon
 /usr/lib/cups/daemon/cups-deviced
 /usr/lib/cups/daemon/cups-driverd
 /usr/lib/cups/daemon/cups-exec
+/usr/lib/cups/daemon/cups-lpd
 /usr/lib/cups/daemon/cups-polld
 %dir /usr/lib/cups/driver
 %dir /usr/lib/cups/filter
-/usr/lib/cups/filter/*
+/usr/lib/cups/filter/bannertops
+/usr/lib/cups/filter/commandtoescpx
+/usr/lib/cups/filter/commandtopclx
+/usr/lib/cups/filter/commandtops
+/usr/lib/cups/filter/gziptoany
+/usr/lib/cups/filter/imagetops
+/usr/lib/cups/filter/imagetoraster
+/usr/lib/cups/filter/pdftops
+/usr/lib/cups/filter/pstops
+/usr/lib/cups/filter/rastertodymo
+/usr/lib/cups/filter/rastertoepson
+/usr/lib/cups/filter/rastertoescpx
+/usr/lib/cups/filter/rastertohp
+/usr/lib/cups/filter/rastertolabel
+/usr/lib/cups/filter/rastertopclx
+/usr/lib/cups/filter/rastertopwg
+/usr/lib/cups/filter/texttops
 %dir /usr/lib/cups/monitor
-/usr/lib/cups/monitor/*
+/usr/lib/cups/monitor/bcp
+/usr/lib/cups/monitor/tbcp
 %dir /usr/lib/cups/notifier
-/usr/lib/cups/notifier/*
+/usr/lib/cups/notifier/dbus
+/usr/lib/cups/notifier/mailto
+/usr/lib/cups/notifier/rss
+%dir %attr(0775,root,ntadmin) %{_datadir}/cups/drivers
+%{_datadir}/applications/cups.desktop
+%{_datadir}/pixmaps/cups.png
+%doc %{_defaultdocdir}/cups
+%doc %{_mandir}/man1/cupstestppd.1.gz
+%doc %{_mandir}/man5/classes.conf.5.gz
+%doc %{_mandir}/man5/client.conf.5.gz
+%doc %{_mandir}/man5/cups-snmp.conf.5.gz
+%doc %{_mandir}/man5/cupsd.conf.5.gz
+%doc %{_mandir}/man5/mailto.conf.5.gz
+%doc %{_mandir}/man5/mime.convs.5.gz
+%doc %{_mandir}/man5/mime.types.5.gz
+%doc %{_mandir}/man5/printers.conf.5.gz
+%doc %{_mandir}/man5/subscriptions.conf.5.gz
+%doc %{_mandir}/man7/backend.7.gz
+%doc %{_mandir}/man7/filter.7.gz
+%doc %{_mandir}/man7/notifier.7.gz
+%doc %{_mandir}/man8/cups-deviced.8.gz
+%doc %{_mandir}/man8/cups-driverd.8.gz
+%doc %{_mandir}/man8/cups-lpd.8.gz
+%doc %{_mandir}/man8/cups-polld.8.gz
+%doc %{_mandir}/man8/cupsaddsmb.8.gz
+%doc %{_mandir}/man8/cupsctl.8.gz
+%doc %{_mandir}/man8/cupsd.8.gz
+%doc %{_mandir}/man8/cupsfilter.8.gz
+%{_datadir}/cups/
+%exclude %{_datadir}/cups/ppdc/
+%if 0%{?have_systemd}
+%{_unitdir}/cups.path
+%{_unitdir}/cups.service
+%{_unitdir}/cups.socket
+%endif
 
-/usr/sbin/*
-%dir /usr/share/cups
-%dir /usr/share/cups/banners
-/usr/share/cups/banners/*
-%dir /usr/share/cups/charsets
-/usr/share/cups/charsets/*
-%dir /usr/share/cups/data
-/usr/share/cups/data/*
-%dir /usr/share/cups/drv
-/usr/share/cups/drv/*
-%dir /usr/share/cups/fonts
-/usr/share/cups/fonts/*
-%dir /usr/share/cups/ipptool
-/usr/share/cups/ipptool/*
-%dir /usr/share/cups/mime
-/usr/share/cups/mime/*
-%dir /usr/share/cups/model
-%dir /usr/share/cups/ppdc
-/usr/share/cups/ppdc/*
-%dir /usr/share/cups/templates
-/usr/share/cups/templates/*
-%dir /usr/share/doc/cups
-/usr/share/doc/cups/*.*
-%dir /usr/share/doc/cups/de
-/usr/share/doc/cups/de/*
-%dir /usr/share/doc/cups/es
-/usr/share/doc/cups/es/*
-%dir /usr/share/doc/cups/eu
-/usr/share/doc/cups/eu/*
-%dir /usr/share/doc/cups/fr
-/usr/share/doc/cups/fr/*
-%dir /usr/share/doc/cups/hu
-/usr/share/doc/cups/hu/*
-%dir /usr/share/doc/cups/id
-/usr/share/doc/cups/id/*
-%dir /usr/share/doc/cups/it
-/usr/share/doc/cups/it/*
-%dir /usr/share/doc/cups/ja
-/usr/share/doc/cups/ja/*
-%dir /usr/share/doc/cups/pl
-/usr/share/doc/cups/pl/*
-%dir /usr/share/doc/cups/ru
-/usr/share/doc/cups/ru/*
-%dir /usr/share/doc/cups/help
-/usr/share/doc/cups/help/accounting.html
-/usr/share/doc/cups/help/cgi.html
-/usr/share/doc/cups/help/glossary.html
-/usr/share/doc/cups/help/kerberos.html
-/usr/share/doc/cups/help/license.html
-/usr/share/doc/cups/help/man-*.html
-/usr/share/doc/cups/help/network.html
-/usr/share/doc/cups/help/options.html
-/usr/share/doc/cups/help/overview.html
-/usr/share/doc/cups/help/policies.html
-/usr/share/doc/cups/help/ref-*.html
-/usr/share/doc/cups/help/security.html
-/usr/share/doc/cups/help/sharing.html
-/usr/share/doc/cups/help/standard.html
-/usr/share/doc/cups/help/translation.html
-/usr/share/doc/cups/help/whatsnew.html
-%dir /usr/share/doc/cups/images
-/usr/share/doc/cups/images/*
-/usr/share/locale/*
-
-%dir /usr/share/man/man1
-/usr/share/man/man1/cancel.1.gz
-/usr/share/man/man1/cupstestdsc.1.gz
-/usr/share/man/man1/cupstestppd.1.gz
-/usr/share/man/man1/ipptool.1.gz
-/usr/share/man/man1/lp.1.gz
-/usr/share/man/man1/lpoptions.1.gz
-/usr/share/man/man1/lppasswd.1.gz
-/usr/share/man/man1/lpq.1.gz
-/usr/share/man/man1/lpr.1.gz
-/usr/share/man/man1/lprm.1.gz
-/usr/share/man/man1/lpstat.1.gz
-%dir /usr/share/man/man5
-/usr/share/man/man5/*.conf.5.gz
-/usr/share/man/man5/ipptoolfile.5.gz
-/usr/share/man/man5/mime.*.5.gz
-%dir /usr/share/man/man8
-/usr/share/man/man8/accept.8.gz
-/usr/share/man/man8/cupsaddsmb.8.gz
-/usr/share/man/man8/cupsaccept.8.gz
-/usr/share/man/man8/cupsctl.8.gz
-/usr/share/man/man8/cupsfilter.8.gz
-/usr/share/man/man8/cupsd.8.gz
-/usr/share/man/man8/cupsdisable.8.gz
-/usr/share/man/man8/cupsenable.8.gz
-/usr/share/man/man8/cupsreject.8.gz
-/usr/share/man/man8/cups-deviced.8.gz
-/usr/share/man/man8/cups-driverd.8.gz
-/usr/share/man/man8/cups-polld.8.gz
-/usr/share/man/man8/lpadmin.8.gz
-/usr/share/man/man8/lpc.8.gz
-/usr/share/man/man8/lpinfo.8.gz
-/usr/share/man/man8/lpmove.8.gz
-/usr/share/man/man8/reject.8.gz
-
-%dir /var/cache/cups
-%attr(0775,root,sys) %dir /var/cache/cups/rss
-%dir /var/log/cups
-%dir /var/run/cups
-%attr(0711,lp,sys) %dir /var/run/cups/certs
-%attr(0710,lp,sys) %dir /var/spool/cups
-%attr(1770,lp,sys) %dir /var/spool/cups/tmp
-
-# Desktop files
-/usr/share/applications/*
-/usr/share/icons/*
+%files client
+# Set explicite owner, group, and permissions for lppasswd
+# to enforce to have the upstream owner, group, and permissions in the RPM
+# because otherwise our build magic /usr/sbin/Check sets them to lp:lp 2755
+# according to /etc/permissions.secure in the build system,
+# see https://bugzilla.novell.com/show_bug.cgi?id=574336#c12
+# and subsequent comments up to comment #17 therein.
+# Even if /etc/permissions.secure in the openSUSE:Factory build system might be
+# already fixed, it must also work for build systems for released products.
+%defattr(-,root,root)
+%{_bindir}/cancel
+%{_bindir}/cupstestdsc
+%{_bindir}/ipptool
+%{_bindir}/lp
+%{_bindir}/lpoptions
+%attr(0555,root,root) %{_bindir}/lppasswd
+%{_bindir}/lpq
+%{_bindir}/lpr
+%{_bindir}/lprm
+%{_bindir}/lpstat
+%{_sbindir}/accept
+%{_sbindir}/cupsaccept
+%{_sbindir}/cupsdisable
+%{_sbindir}/cupsenable
+%{_sbindir}/cupsreject
+%{_sbindir}/lpadmin
+%{_sbindir}/lpc
+%{_sbindir}/lpinfo
+%{_sbindir}/lpmove
+%{_sbindir}/reject
+%doc %{_mandir}/man1/cancel.1.gz
+%doc %{_mandir}/man1/cupstestdsc.1.gz
+%doc %{_mandir}/man1/ipptool.1.gz
+%doc %{_mandir}/man1/lp.1.gz
+%doc %{_mandir}/man1/lpoptions.1.gz
+%doc %{_mandir}/man1/lppasswd.1.gz
+%doc %{_mandir}/man1/lpq.1.gz
+%doc %{_mandir}/man1/lpr.1.gz
+%doc %{_mandir}/man1/lprm.1.gz
+%doc %{_mandir}/man1/lpstat.1.gz
+%doc %{_mandir}/man5/ipptoolfile.5.gz
+%doc %{_mandir}/man8/accept.8.gz
+%doc %{_mandir}/man8/cupsaccept.8.gz
+%doc %{_mandir}/man8/cupsdisable.8.gz
+%doc %{_mandir}/man8/cupsenable.8.gz
+%doc %{_mandir}/man8/cupsreject.8.gz
+%doc %{_mandir}/man8/lpadmin.8.gz
+%doc %{_mandir}/man8/lpc.8.gz
+%doc %{_mandir}/man8/lpinfo.8.gz
+%doc %{_mandir}/man8/lpmove.8.gz
+%doc %{_mandir}/man8/reject.8.gz
 
 %files devel
 %defattr(-,root,root)
-%dir /usr/share/cups/examples
-/usr/share/cups/examples/*
-%dir /usr/share/man/man1
-/usr/share/man/man1/cups-config.1.gz
-/usr/share/man/man1/ppd*.1.gz
-%dir /usr/share/man/man5
-/usr/share/man/man5/ppdcfile.5.gz
-/usr/share/man/man7/backend.7.gz
-/usr/share/man/man7/filter.7.gz
-/usr/share/man/man7/notifier.7.gz
+%{_includedir}/cups/
+%{_libdir}/libcups.so
+%{_libdir}/libcupsimage.so
+%{_libdir}/libcupscgi.so
+%{_libdir}/libcupsdriver.so
+%{_libdir}/libcupsmime.so
+%{_libdir}/libcupsppdc.so
+%{_datadir}/cups/ppdc/
 
-/usr/bin/cups-config
-/usr/bin/ppd*
-%dir /usr/include/cups
-/usr/include/cups/*
-/usr/lib*/*.so
-
-%if %{?_with_static:1}%{!?_with_static:0}
-/usr/lib*/*.a
-%endif
-
-%dir /usr/share/doc/cups/help
-/usr/share/doc/cups/help/api*.html
-/usr/share/doc/cups/help/postscript-driver.html
-/usr/share/doc/cups/help/ppd-compiler.html
-/usr/share/doc/cups/help/raster-driver.html
-/usr/share/doc/cups/help/spec*.html
+%files ddk
+%defattr(-,root,root)
+%{_bindir}/ppdc
+%{_bindir}/ppdhtml
+%{_bindir}/ppdi
+%{_bindir}/ppdmerge
+%{_bindir}/ppdpo
+%doc %{_mandir}/man1/ppdc.1.gz
+%doc %{_mandir}/man1/ppdhtml.1.gz
+%doc %{_mandir}/man1/ppdi.1.gz
+%doc %{_mandir}/man1/ppdmerge.1.gz
+%doc %{_mandir}/man1/ppdpo.1.gz
+%doc %{_mandir}/man5/ppdcfile.5.gz
 
 %files libs
 %defattr(-,root,root)
-/usr/lib*/*.so.*
+%config(noreplace) %{_sysconfdir}/cups/client.conf
+%dir %attr(0710,root,lp) %{_var}/spool/cups
+%dir %attr(1770,root,lp) %{_var}/spool/cups/tmp
+%dir %attr(0755,lp,lp) %{_var}/log/cups/
+%dir %attr(0775,lp,lp) %{_var}/cache/cups
+%{_bindir}/cups-config
+%{_libdir}/libcups.so.*
+%{_libdir}/libcupscgi.so.*
+%{_libdir}/libcupsdriver.so.*
+%{_libdir}/libcupsimage.so.*
+%{_libdir}/libcupsmime.so.*
+%{_libdir}/libcupsppdc.so.*
+%{_datadir}/locale/*/cups_*
+%doc %{_mandir}/man1/cups-config.1.gz
 
-%files lpd
-%defattr(-,root,root)
-/etc/xinetd.d/cups-lpd
-%dir /usr/lib/cups
-%dir /usr/lib/cups/daemon
-/usr/lib/cups/daemon/cups-lpd
-%dir /usr/share/man/man8
-/usr/share/man/man8/cups-lpd.8.gz
-
-%if %{?_with_php:1}%{!?_with_php:0}
-%files php
-# PHP
-/usr/lib*/php*
-%endif
-
-
-#
-# End of "$Id: cups.spec.in 10428 2012-04-23 17:46:53Z mike $".
-#
+%changelog
