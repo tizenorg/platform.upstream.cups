@@ -273,7 +273,6 @@ mv $RPM_BUILD_ROOT/usr/share/locale/{zh,zh_CN}
 %{_sbindir}/cupsctl
 %{_sbindir}/cupsd
 %{_sbindir}/cupsfilter
-%{_sbindir}/rccups
 %dir /usr/lib/cups
 %dir /usr/lib/cups/backend
 /usr/lib/cups/backend/http
