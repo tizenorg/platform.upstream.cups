@@ -89,7 +89,6 @@ AC_OUTPUT(Makedefs
 	  scheduler/org.cups.cupsd.service
 	  scheduler/org.cups.cupsd.socket
  	  templates/header.tmpl
-          packaging/cups.list
 	  $LANGFILES)
 
 chmod +x cups-config

@@ -1,0 +1,19 @@
+* Wed Oct 09 2013 Łukasz Stelmach <l.stelmach@samsung.com> upstream/1.6.4@fe0f7d7
+- Adapt packaging/cups.spec for 1.6.4
+
+* Tue Jul 16 2013 Michael I Doherty <michael.i.doherty@intel.com> accepted/tizen/20130710.220945@d56b191
+- Only use systemd socket activation, do not enable service itself
+
+* Wed Jun 19 2013 Corentin Lecouvey <corentin.lecouvey@eurogiciel.fr> accepted/tizen/20130520.095212@efba874
+- packaging: add scriptlets to handle systemd cups service
+- packaging: set pdftops filter as recommended dependency
+- remove packaging file
+- Fixed -devel dependencies
+- fixed pam setup in spec
+- fixed pam setup in spec
+- fixed pam setup in spec
+- add systemd support
+- add pam
+- fixed packaging
+- Imported Upstream version 1.5.3
+
