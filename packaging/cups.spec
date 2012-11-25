@@ -197,8 +197,8 @@ ln -sf libcups.so.2 $RPM_BUILD_ROOT%{_libdir}/libcups.so
 # Add missing usual directories:
 install -d -m755 $RPM_BUILD_ROOT%{_datadir}/cups/drivers
 install -d -m755 $RPM_BUILD_ROOT/var/cache/cups
-# Add conf/pam.suse regarding support for PAM (see Patch100: cups-pam.diff):
-install -m 644 -D conf/pam.suse $RPM_BUILD_ROOT/etc/pam.d/cups
+# Add conf/pam.tizen regarding support for PAM (see Patch100: cups-pam.diff):
+install -m 644 -D conf/pam.tizen $RPM_BUILD_ROOT/etc/pam.d/cups
 # Add missing usual documentation:
 install -d -m755 $RPM_BUILD_ROOT/%{_defaultdocdir}/cups
 for f in CHANGES*.txt CREDITS.txt INSTALL.txt LICENSE.txt README.txt
