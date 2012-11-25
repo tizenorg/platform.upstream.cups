@@ -233,6 +233,9 @@ rm -rf $RPM_BUILD_ROOT/%{_mandir}/cat?
 # Norwegian is "nb", "zh" is probablyx "zh_CN"
 mv $RPM_BUILD_ROOT/usr/share/locale/{no,nb}
 mv $RPM_BUILD_ROOT/usr/share/locale/{zh,zh_CN}
+
+rm -rf %{buildroot}/etc/xinetd.d
+
 # Run fdupes:
 %fdupes $RPM_BUILD_ROOT
 
