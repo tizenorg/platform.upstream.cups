@@ -26,6 +26,8 @@
  *   launchd_checkin()     - Check-in with launchd and collect the listening
  *                           fds.
  *   launchd_checkout()    - Update the launchd KeepAlive file as needed.
+ *   systemd_checkin()     - Check-in with systemd and collect the
+ *                           listening fds.
  *   parent_handler()      - Catch USR1/CHLD signals...
  *   process_children()    - Process all dead children...
  *   select_timeout()      - Calculate the select timeout value.
@@ -62,6 +64,10 @@
 #  endif /* !LAUNCH_JOBKEY_SERVICEIPC */
 #endif /* HAVE_LAUNCH_H */
 
+#ifdef HAVE_SYSTEMD
+#include <systemd/sd-daemon.h>
+#endif /* HAVE_SYSTEMD */
+
 #if defined(HAVE_MALLOC_H) && defined(HAVE_MALLINFO)
 #  include <malloc.h>
 #endif /* HAVE_MALLOC_H && HAVE_MALLINFO */
@@ -78,6 +84,9 @@
 static void		launchd_checkin(void);
 static void		launchd_checkout(void);
 #endif /* HAVE_LAUNCHD */
+#ifdef HAVE_SYSTEMD
+static void		systemd_checkin(void);
+#endif /* HAVE_SYSTEMD */
 static void		parent_handler(int sig);
 static void		process_children(void);
 static void		sigchld_handler(int sig);
@@ -519,6 +528,13 @@ main(int  argc,				/* I - Number of command-line args */
   }
 #endif /* HAVE_LAUNCHD */
 
+#ifdef HAVE_SYSTEMD
+ /*
+  * If we were started by systemd get the listen sockets file descriptors...
+  */
+  systemd_checkin();
+#endif /* HAVE_SYSTEMD */
+
  /*
   * Startup the server...
   */
@@ -729,6 +745,15 @@ main(int  argc,				/* I - Number of command-line args */
 	  launchd_checkout();
 	}
 #endif /* HAVE_LAUNCHD */
+
+#ifdef HAVE_SYSTEMD
+       /*
+	* If we were started by systemd get the listen sockets file
+	* descriptors...
+        */
+
+        systemd_checkin();
+#endif /* HAVE_SYSTEMD */
 
        /*
         * Startup the server...
@@ -1535,6 +1560,147 @@ launchd_checkout(void)
 }
 #endif /* HAVE_LAUNCHD */
 
+#ifdef HAVE_SYSTEMD
+static void
+systemd_checkin(void)
+{
+  int n, fd;
+
+  n = sd_listen_fds(0);
+  if (n < 0)
+  {
+    cupsdLogMessage(CUPSD_LOG_ERROR,
+           "systemd_checkin: Failed to acquire sockets from systemd - %s",
+           strerror(-n));
+    exit(EXIT_FAILURE);
+    return;
+  }
+
+  if (n == 0)
+    return;
+
+  for (fd = SD_LISTEN_FDS_START; fd < SD_LISTEN_FDS_START + n; fd ++)
+  {
+    http_addr_t addr;
+    socklen_t addrlen = sizeof (addr);
+    int r;
+    cupsd_listener_t *lis;
+    char s[256];
+
+    r = sd_is_socket(fd, AF_UNSPEC, SOCK_STREAM, 1);
+    if (r < 0)
+    {
+      cupsdLogMessage(CUPSD_LOG_ERROR,
+             "systemd_checkin: Unable to verify socket type - %s",
+             strerror(-r));
+      continue;
+    }
+
+    if (!r)
+    {
+      cupsdLogMessage(CUPSD_LOG_ERROR,
+		      "Browsing=%d", Browsing);
+      cupsdLogMessage(CUPSD_LOG_ERROR,
+		      "BrowseLocalProtocols=%x", BrowseLocalProtocols);
+      cupsdLogMessage(CUPSD_LOG_ERROR,
+		      "BrowseRemoteProtocols=%x", BrowseRemoteProtocols);
+      cupsdLogMessage(CUPSD_LOG_ERROR,
+		      "BROWSE_CUPS=%x", BROWSE_CUPS);
+      if (Browsing &&
+	  ((BrowseLocalProtocols | BrowseRemoteProtocols) & BROWSE_CUPS))
+      {
+	r = sd_is_socket(fd, AF_UNSPEC, SOCK_DGRAM, 0);
+	if (r < 0)
+	{
+	  cupsdLogMessage(CUPSD_LOG_ERROR,
+			  "systemd_checkin: Unable to verify socket type - %s",
+			  strerror(-r));
+	  continue;
+	}
+
+	if (r)
+	{
+	 /*
+	  * This is the browse socket.
+	  */
+
+	  char addrstr[256];
+	  if (getsockname(fd, (struct sockaddr*) &addr, &addrlen))
+	  {
+	    cupsdLogMessage(CUPSD_LOG_ERROR,
+			    "systemd_checkin: Unable to get local address - %s",
+			    strerror(errno));
+	    continue;
+	  }
+
+	  httpAddrString (&addr, addrstr, sizeof (addrstr));
+	  BrowseSocket = fd;
+	  BrowseSocketIsSystemd = 1;
+	  cupsdLogMessage(CUPSD_LOG_DEBUG,
+			  "systemd_checkin: Matched browse (port %d) with fd %d:%s...",
+			  BrowsePort, fd, addrstr);
+	  continue;
+	}
+
+      }
+      cupsdLogMessage(CUPSD_LOG_ERROR,
+             "systemd_checkin: Socket not of the right type");
+      continue;
+    }
+
+    if (getsockname(fd, (struct sockaddr*) &addr, &addrlen))
+    {
+      cupsdLogMessage(CUPSD_LOG_ERROR,
+             "systemd_checkin: Unable to get local address - %s",
+             strerror(errno));
+      continue;
+    }
+
+   /*
+    * Try to match the systemd socket address to one of the listeners...
+    */
+
+    for (lis = (cupsd_listener_t *)cupsArrayFirst(Listeners);
+       lis;
+       lis = (cupsd_listener_t *)cupsArrayNext(Listeners))
+      if (httpAddrEqual(&lis->address, &addr))
+	break;
+
+    if (lis)
+    {
+      cupsdLogMessage(CUPSD_LOG_DEBUG,
+                      "systemd_checkin: Matched existing listener %s with fd %d...",
+                      httpAddrString(&(lis->address), s, sizeof(s)), fd);
+    }
+    else
+    {
+      cupsdLogMessage(CUPSD_LOG_DEBUG,
+                      "systemd_checkin: Adding new listener %s with fd %d...",
+                      httpAddrString(&addr, s, sizeof(s)), fd);
+
+      if ((lis = calloc(1, sizeof(cupsd_listener_t))) == NULL)
+      {
+        cupsdLogMessage(CUPSD_LOG_ERROR,
+                        "systemd_checkin: Unable to allocate listener - "
+                        "%s.", strerror(errno));
+        exit(EXIT_FAILURE);
+      }
+
+      cupsArrayAdd(Listeners, lis);
+
+      memcpy(&lis->address, &addr, sizeof(lis->address));
+    }
+
+    lis->fd = fd;
+    lis->is_systemd = 1;
+
+#  ifdef HAVE_SSL
+    if (_httpAddrPort(&(lis->address)) == 443)
+      lis->encryption = HTTP_ENCRYPT_ALWAYS;
+#  endif /* HAVE_SSL */
+  }
+}
+#endif /* HAVE_SYSTEMD */
 
 /*
  * 'parent_handler()' - Catch USR1/CHLD signals...

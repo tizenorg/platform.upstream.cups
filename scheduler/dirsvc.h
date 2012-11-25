@@ -96,6 +96,8 @@ VAR int			Browsing	VALUE(TRUE),
 					/* Short names for remote printers? */
 			BrowseSocket	VALUE(-1),
 					/* Socket for browsing */
+			BrowseSocketIsSystemd	VALUE(0),
+					/* BrowseSocket is systemd-provided? */
 			BrowsePort	VALUE(IPP_PORT),
 					/* Port number for broadcasts */
 			BrowseInterval	VALUE(DEFAULT_INTERVAL),

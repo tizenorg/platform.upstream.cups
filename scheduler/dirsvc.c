@@ -1457,7 +1457,7 @@ cupsdStartBrowsing(void)
       }
     }
 
-    if (BrowseSocket >= 0)
+    if (BrowseSocket >= 0 && !BrowseSocketIsSystemd)
     {
      /*
       * Bind the socket to browse port...
@@ -1501,13 +1501,17 @@ cupsdStartBrowsing(void)
 	cupsdLogMessage(CUPSD_LOG_ERROR, "Unable to set broadcast mode - %s.",
 			strerror(errno));
 
+	if (!BrowseSocketIsSystemd)
+	{
 #ifdef WIN32
-	closesocket(BrowseSocket);
+	  closesocket(BrowseSocket);
 #else
-	close(BrowseSocket);
+	  close(BrowseSocket);
 #endif /* WIN32 */
 
-	BrowseSocket = -1;
+	  BrowseSocket = -1;
+	}
+
 	BrowseLocalProtocols &= ~BROWSE_CUPS;
 	BrowseRemoteProtocols &= ~BROWSE_CUPS;
 
@@ -1820,15 +1824,22 @@ cupsdStopBrowsing(void)
   if (((BrowseLocalProtocols | BrowseRemoteProtocols) & BROWSE_CUPS) &&
       BrowseSocket >= 0)
   {
-   /*
-    * Close the socket and remove it from the input selection set.
-    */
+    if (!BrowseSocketIsSystemd)
+    {
+     /*
+      * Close the socket.
+      */
 
 #ifdef WIN32
-    closesocket(BrowseSocket);
+      closesocket(BrowseSocket);
 #else
-    close(BrowseSocket);
+      close(BrowseSocket);
 #endif /* WIN32 */
+    }
+
+   /*
+    * Remove it from the input selection set.
+    */
 
     cupsdRemoveSelect(BrowseSocket);
     BrowseSocket = -1;
@@ -5151,11 +5162,14 @@ update_cups_browse(void)
                       strerror(errno));
       cupsdLogMessage(CUPSD_LOG_ERROR, "CUPS browsing turned off.");
 
+      if (!BrowseSocketIsSystemd)
+      {
 #ifdef WIN32
-      closesocket(BrowseSocket);
+	closesocket(BrowseSocket);
 #else
-      close(BrowseSocket);
+	close(BrowseSocket);
 #endif /* WIN32 */
+      }
 
       cupsdRemoveSelect(BrowseSocket);
       BrowseSocket = -1;
