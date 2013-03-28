@@ -6,7 +6,7 @@ BuildRequires:  gcc-c++
 BuildRequires:  libjpeg8-devel
 BuildRequires:  libpng-devel
 BuildRequires:  libtiff-devel
-BuildRequires:  openssl-devel
+BuildRequires:  libopenssl-devel
 BuildRequires:  pam-devel
 BuildRequires:  pkgconfig
 BuildRequires:  update-desktop-files
@@ -97,6 +97,13 @@ Group:          Development/Libraries/C and C++
 # there are no CUPS-internal dependencies via CUPS private API calls
 # (the latter would require the exact matching cups-libs version-release):
 Requires:       cups-libs = %{version}
+Requires:       libjpeg-devel
+Requires:       libpng-devel
+Requires:       libtiff-devel
+Requires:       libopenssl-devel
+Requires:       pam-devel
+Requires:       zlib-devel
+Requires:       systemd-devel
 Requires:       glibc-devel
 
 %description devel
