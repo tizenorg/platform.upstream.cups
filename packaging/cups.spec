@@ -49,6 +49,8 @@ Source108:      cups-client.conf
 Source109:      baselibs.conf
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
+Requires:       /usr/bin/pdftops
+
 %description
 The Common UNIX Printing System (CUPS) is the
 standards-based, open source printing system.
