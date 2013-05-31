@@ -50,6 +50,7 @@ Source109:      baselibs.conf
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 Requires:       /usr/bin/pdftops
+%systemd_requires
 
 %description
 The Common UNIX Printing System (CUPS) is the
@@ -250,6 +251,15 @@ rm -rf %{buildroot}/etc/xinetd.d
 
 %pre
 /usr/sbin/groupadd -g 71 -o -r ntadmin 2>/dev/null || :
+
+%post
+%systemd_post cups.service cups.socket cups.path
+
+%preun
+%systemd_preun cups.service cups.socket cups.path
+
+%postun
+%systemd_postun cups.service cups.socket cups.path
 
 %post libs -p /sbin/ldconfig
 
