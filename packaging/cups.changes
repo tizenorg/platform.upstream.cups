@@ -1,0 +1,13 @@
+* Wed Jun 19 2013 Corentin Lecouvey <corentin.lecouvey@eurogiciel.fr> accepted/tizen/20130520.095212@efba874
+- packaging: add scriptlets to handle systemd cups service
+- packaging: set pdftops filter as recommended dependency
+- remove packaging file
+- Fixed -devel dependencies
+- fixed pam setup in spec
+- fixed pam setup in spec
+- fixed pam setup in spec
+- add systemd support
+- add pam
+- fixed packaging
+- Imported Upstream version 1.5.3
+
