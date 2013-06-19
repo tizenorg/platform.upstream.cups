@@ -1,0 +1,8 @@
+Change-Id: If1c79b41fa96ae958b7bc7f86c11207b96049b6c
+Code-Review+2: Anas Nashif <anas.nashif@intel.com>
+Verified+1: Corentin Lecouvey <corentin.lecouvey@eurogiciel.fr>
+Submitted-by: Anas Nashif <anas.nashif@intel.com>
+Submitted-at: Wed, 19 Jun 2013 06:59:48 -0700
+Reviewed-on: https://review.tizen.org/gerrit/4105
+Project: platform/upstream/cups
+Branch: refs/heads/tizen
