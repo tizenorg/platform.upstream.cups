@@ -47,6 +47,7 @@ Source105:      PSLEVEL1.PPD.bz2
 Source106:      PSLEVEL2.PPD.bz2
 Source108:      cups-client.conf
 Source109:      baselibs.conf
+Source1001: 	cups.manifest
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 Requires:       /usr/bin/pdftops
@@ -145,6 +146,7 @@ printer drivers for CUPS.
 %prep
 # Be quiet when unpacking:
 %setup -q -n cups-%{version}
+cp %{SOURCE1001} .
 
 %build
 # Disable SILENT run of make so that make runs verbose as usual:
@@ -266,6 +268,7 @@ rm -rf %{buildroot}/etc/xinetd.d
 %postun libs -p /sbin/ldconfig
 
 %files
+%manifest %{name}.manifest
 # The files sections list all mandatory files explicitly one by one.
 # In particular all executables are listed explicitly.
 # This avoids that CUPS' configure magic might silently
@@ -379,6 +382,7 @@ rm -rf %{buildroot}/etc/xinetd.d
 %endif
 
 %files client
+%manifest %{name}.manifest
 # Set explicite owner, group, and permissions for lppasswd
 # to enforce to have the upstream owner, group, and permissions in the RPM
 # because otherwise our build magic /usr/sbin/Check sets them to lp:lp 2755
@@ -431,6 +435,7 @@ rm -rf %{buildroot}/etc/xinetd.d
 %doc %{_mandir}/man8/reject.8.gz
 
 %files devel
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %{_includedir}/cups/
 %{_libdir}/libcups.so
@@ -442,6 +447,7 @@ rm -rf %{buildroot}/etc/xinetd.d
 %{_datadir}/cups/ppdc/
 
 %files ddk
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %{_bindir}/ppdc
 %{_bindir}/ppdhtml
@@ -456,6 +462,7 @@ rm -rf %{buildroot}/etc/xinetd.d
 %doc %{_mandir}/man5/ppdcfile.5.gz
 
 %files libs
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %config(noreplace) %{_sysconfdir}/cups/client.conf
 %dir %attr(0710,root,lp) %{_var}/spool/cups
