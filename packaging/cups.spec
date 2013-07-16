@@ -255,13 +255,13 @@ rm -rf %{buildroot}/etc/xinetd.d
 /usr/sbin/groupadd -g 71 -o -r ntadmin 2>/dev/null || :
 
 %post
-%systemd_post cups.service cups.socket cups.path
+%systemd_post cups.socket cups.path
 
 %preun
-%systemd_preun cups.service cups.socket cups.path
+%systemd_preun cups.socket cups.path
 
 %postun
-%systemd_postun cups.service cups.socket cups.path
+%systemd_postun cups.socket cups.path
 
 %post libs -p /sbin/ldconfig
 
