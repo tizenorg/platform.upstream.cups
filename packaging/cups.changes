@@ -1,3 +1,6 @@
+* Tue Jul 16 2013 Michael I Doherty <michael.i.doherty@intel.com> accepted/tizen/20130710.220945@d56b191
+- Only use systemd socket activation, do not enable service itself
+
 * Wed Jun 19 2013 Corentin Lecouvey <corentin.lecouvey@eurogiciel.fr> accepted/tizen/20130520.095212@efba874
 - packaging: add scriptlets to handle systemd cups service
 - packaging: set pdftops filter as recommended dependency
