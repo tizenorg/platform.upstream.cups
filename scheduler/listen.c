@@ -401,11 +401,7 @@ cupsdStopListening(void)
        lis;
        lis = (cupsd_listener_t *)cupsArrayNext(Listeners))
   {
-    if (lis->fd != -1
-#ifdef HAVE_SYSTEMD
-        && !lis->is_systemd
-#endif /* HAVE_SYSTEMD */
-        )
+    if (lis->fd != -1)
     {
 #ifdef WIN32
       closesocket(lis->fd);

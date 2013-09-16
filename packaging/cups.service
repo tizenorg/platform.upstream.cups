@@ -1,0 +1,22 @@
+[Unit]
+Description=Set SMACK labels for volatile cups directories
+After=opt-var-run.mount multi-user.target
+
+[Service]
+Type=oneshot
+ExecStartPre=-/bin/mkdir -p /opt/var/run/cups
+ExecStartPre=-/bin/chown 5000:5000 /opt/var/run/cups
+ExecStartPre=-/bin/mkdir -p /opt/var/spool/cups/tmp
+ExecStartPre=-/bin/chown -R 5000:5000 /opt/var/spool/cups
+ExecStartPre=-/bin/mkdir -p /opt/var/log/cups
+ExecStartPre=-/bin/chown 5000:5000 /opt/var/log/cups
+ExecStartPre=-/bin/mkdir -p /opt/var/cache/cups
+ExecStartPre=-/bin/chown 5000:5000 /opt/var/cache/cups
+ExecStartPre=-/usr/bin/chsmack -a org.tizen.mobileprint /opt/var/run/cups
+ExecStartPre=-/usr/bin/chsmack -a org.tizen.mobileprint /opt/var/spool/cups
+ExecStartPre=-/usr/bin/chsmack -a org.tizen.mobileprint /opt/var/spool/cups/tmp
+ExecStartPre=-/usr/bin/chsmack -a org.tizen.mobileprint /opt/var/log/cups
+ExecStart=-/usr/bin/chsmack -a org.tizen.mobileprint /opt/var/cache/cups
+
+[Install]
+WantedBy=multi-user.target

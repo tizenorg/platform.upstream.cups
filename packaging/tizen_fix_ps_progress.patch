@@ -1,0 +1,295 @@
+diff -urN cups-1.6.1.orig/filter/pstops.c cups-1.6.1/filter/pstops.c
+--- cups-1.6.1.orig/filter/pstops.c
++++ cups-1.6.1/filter/pstops.c
+@@ -85,6 +85,7 @@
+ #define PSTOPS_LAYOUT_NEGATEX	2	/* definitions above... */
+ #define PSTOPS_LAYOUT_VERTICAL	4
+
++#define MAX_BUF 16384
+
+ /*
+  * Types...
+@@ -163,6 +164,7 @@ typedef struct				/**** Document information ****/
+  */
+
+ static int		JobCanceled = 0;/* Set to 1 on SIGTERM */
++static int		job_progress = 0;
+
+
+ /*
+@@ -221,6 +223,16 @@ static void		write_labels(pstops_doc_t *doc, int orient);
+ static void		write_options(pstops_doc_t  *doc, ppd_file_t *ppd,
+ 			              int num_options, cups_option_t *options);
+ 
++/*
++ * 'update_progress()' - Update job-media-progress attribute.
++ */
++static void update_progress(int progress)
++{
++  if ((job_progress < progress) && (progress <= 100)) {
++    job_progress = progress;
++	fprintf(stderr, "ATTR: job-media-progress=%d\n", job_progress);
++  }
++}
+ 
+ /*
+  * 'main()' - Main entry.
+@@ -235,7 +247,7 @@ main(int  argc,				/* I - Number of command-line args */
+   ppd_file_t	*ppd;			/* PPD file */
+   int		num_options;		/* Number of print options */
+   cups_option_t	*options;		/* Print options */
+-  char		line[8192];		/* Line buffer */
++  char		line[MAX_BUF];		/* Line buffer */
+   size_t	len;			/* Length of line buffer */
+ #if defined(HAVE_SIGACTION) && !defined(HAVE_SIGSET)
+   struct sigaction action;		/* Actions for POSIX signals */
+@@ -388,6 +400,9 @@ main(int  argc,				/* I - Number of command-line args */
+     copy_non_dsc(fp, &doc, ppd, line, len, sizeof(line));
+   }
+
++  if (job_progress < 100)
++    update_progress(100);
++
+  /*
+   * Send %%EOF as needed...
+   */
+@@ -425,7 +440,6 @@ main(int  argc,				/* I - Number of command-line args */
+   return (0);
+ }
+
+-
+ /*
+  * 'add_page()' - Add a page to the pages array.
+  */
+@@ -551,10 +565,12 @@ copy_bytes(cups_file_t *fp,		/* I - File to read from */
+            off_t       offset,		/* I - Offset to page data */
+            size_t      length)		/* I - Length of page data */
+ {
+-  char		buffer[8192];		/* Data buffer */
++  char		buffer[MAX_BUF];		/* Data buffer */
+   ssize_t	nbytes;			/* Number of bytes read */
+   size_t	nleft;			/* Number of bytes left/remaining */
++  int		progress = 0;
+
++  progress = job_progress;
+
+   nleft = length;
+
+@@ -566,6 +582,9 @@ copy_bytes(cups_file_t *fp,		/* I - File to read from */
+
+   while (nleft > 0 || length == 0)
+   {
++	if (progress > 0) // To start after PAGE: info is printed
++      update_progress(++progress);
++
+     if (nleft > sizeof(buffer) || length == 0)
+       nbytes = sizeof(buffer);
+     else
+@@ -821,7 +840,9 @@ copy_dsc(cups_file_t  *fp,		/* I - File to read from */
+ {
+   int		number;			/* Page number */
+   pstops_page_t	*pageinfo;		/* Page information */
++  int		progress = 0;
+
++  progress = job_progress;
+
+  /*
+   * Make sure we use ESPshowpage for EPS files...
+@@ -918,9 +939,12 @@ copy_dsc(cups_file_t  *fp,		/* I - File to read from */
+
+     if (!doc->slow_order)
+     {
+-      if (!ppd || !ppd->num_filters)
+-	fprintf(stderr, "PAGE: %d %d\n", doc->page,
++      if (!ppd || !ppd->num_filters) {
++        fprintf(stderr, "PAGE: %d %d\n", doc->page,
+         	doc->slow_collate ? 1 : doc->copies);
++		progress = job_progress = 0;
++		update_progress(++progress);
++	  }
+
+       printf("%%%%Page: (filler) %d\n", doc->page);
+     }
+@@ -965,6 +989,9 @@ copy_dsc(cups_file_t  *fp,		/* I - File to read from */
+       if (JobCanceled)
+ 	break;
+
++      if (progress > 0) // To start after PAGE: info is printed
++        update_progress(++progress);
++
+      /*
+       * Send end-of-job stuff followed by any start-of-job stuff required
+       * for the JCL options...
+@@ -1006,7 +1033,7 @@ copy_dsc(cups_file_t  *fp,		/* I - File to read from */
+       if (!number)
+       {
+         pageinfo = (pstops_page_t *)cupsArrayFirst(doc->pages);
+-	copy_bytes(doc->temp, 0, pageinfo->offset);
++        copy_bytes(doc->temp, 0, pageinfo->offset);
+       }
+
+      /*
+@@ -1023,9 +1050,15 @@ copy_dsc(cups_file_t  *fp,		/* I - File to read from */
+
+         number ++;
+
+-	if (!ppd || !ppd->num_filters)
++	if (!ppd || !ppd->num_filters) {
+ 	  fprintf(stderr, "PAGE: %d %d\n", number,
+ 	          doc->slow_collate ? 1 : doc->copies);
++	  progress = job_progress = 0;
++	  update_progress(++progress);
++	}
++
++        if (progress > 0) // To start after PAGE: info is printed
++          update_progress(++progress);
+
+ 	if (doc->number_up > 1)
+ 	{
+@@ -1080,9 +1113,11 @@ copy_non_dsc(cups_file_t  *fp,		/* I - File to read from */
+ 	     size_t       linesize)	/* I - Size of line buffer */
+ {
+   int	copy;				/* Current copy */
+-  char	buffer[8192];			/* Copy buffer */
++  char	buffer[MAX_BUF];			/* Copy buffer */
+   int	bytes;				/* Number of bytes copied */
++  int	progress = 0;
+
++  progress = job_progress;
+
+  /*
+   * First let the user know that they are attempting to print a file
+@@ -1166,8 +1201,11 @@ copy_non_dsc(cups_file_t  *fp,		/* I - File to read from */
+   * Finally, embed a copy of the file inside a %%Page...
+   */
+
+-  if (!ppd || !ppd->num_filters)
++  if (!ppd || !ppd->num_filters) {
+     fprintf(stderr, "PAGE: 1 %d\n", doc->temp ? 1 : doc->copies);
++    progress = job_progress = 0;
++    update_progress(++progress);
++  }
+
+   puts("%%Page: 1 1");
+   puts("%%BeginPageSetup");
+@@ -1182,6 +1220,9 @@ copy_non_dsc(cups_file_t  *fp,		/* I - File to read from */
+ 
+   while ((bytes = cupsFileRead(fp, buffer, sizeof(buffer))) > 0)
+   {
++    if (progress > 0) // To start after PAGE: info is printed
++      update_progress(++progress);
++
+     fwrite(buffer, 1, bytes, stdout);
+
+     if (doc->temp)
+@@ -1213,10 +1254,16 @@ copy_non_dsc(cups_file_t  *fp,		/* I - File to read from */
+     for (copy = 1; copy < doc->copies; copy ++)
+     {
+       if (JobCanceled)
+-	break;
++        break;
++
++      if (!ppd || !ppd->num_filters) {
++        fputs("PAGE: 1 1\n", stderr);
++        progress = job_progress = 0;
++        update_progress(++progress);
++	  }
+
+-      if (!ppd || !ppd->num_filters)
+-	fputs("PAGE: 1 1\n", stderr);
++      if (progress > 0) // To start after PAGE: info is printed
++        update_progress(++progress);
+
+       printf("%%%%Page: %d %d\n", copy + 1, copy + 1);
+       puts("%%BeginPageSetup");
+@@ -1230,7 +1277,7 @@ copy_non_dsc(cups_file_t  *fp,		/* I - File to read from */
+
+       if (doc->use_ESPshowpage)
+       {
+-	WriteLabels(Orientation);
++        WriteLabels(Orientation);
+         puts("ESPshowpage");
+       }
+     }
+@@ -1268,7 +1315,9 @@ copy_page(cups_file_t  *fp,		/* I - File to read from */
+   int		first_page;		/* First page on N-up output? */
+   int		has_page_setup = 0;	/* Does the page have %%Begin/EndPageSetup? */
+   int		bounding_box[4];	/* PageBoundingBox */
++  int		progress = 0;
+
++  progress = job_progress;
+
+  /*
+   * Get the page label for this page...
+@@ -1368,6 +1417,9 @@ copy_page(cups_file_t  *fp,		/* I - File to read from */
+
+   while ((linelen = cupsFileGetLine(fp, line, linesize)) > 0)
+   {
++	if (progress > 0) // To start after PAGE: info is printed
++      update_progress(++progress);
++
+     if (!strncmp(line, "%%PageBoundingBox:", 18))
+     {
+      /*
+@@ -1519,9 +1571,12 @@ copy_page(cups_file_t  *fp,		/* I - File to read from */
+
+   if (!doc->slow_order && first_page)
+   {
+-    if (!ppd || !ppd->num_filters)
++    if (!ppd || !ppd->num_filters) {
+       fprintf(stderr, "PAGE: %d %d\n", doc->page,
+ 	      doc->slow_collate ? 1 : doc->copies);
++      progress = job_progress = 0;
++      update_progress(++progress);
++	}
+
+     if (doc->number_up > 1)
+     {
+@@ -1551,6 +1606,9 @@ copy_page(cups_file_t  *fp,		/* I - File to read from */
+
+     while ((linelen = cupsFileGetLine(fp, line, linesize)) > 0)
+     {
++      if (progress > 0) // To start after PAGE: info is printed
++        update_progress(++progress);
++
+       if (!strncmp(line, "%%EndPageSetup", 14))
+ 	break;
+       else if (!strncmp(line, "%%BeginFeature:", 15))
+@@ -1630,6 +1688,9 @@ copy_page(cups_file_t  *fp,		/* I - File to read from */
+
+   do
+   {
++    if (progress > 0) // To start after PAGE: info is printed
++      update_progress(++progress);
++
+     if (level == 0 &&
+         (!strncmp(line, "%%Page:", 7) ||
+ 	 !strncmp(line, "%%Trailer", 9) ||
+@@ -1666,6 +1727,9 @@ copy_page(cups_file_t  *fp,		/* I - File to read from */
+
+       while (bytes > 0)
+       {
++        if (progress > 0) // To start after PAGE: info is printed
++          update_progress(++progress);
++
+ 	if (bytes > linesize)
+ 	  linelen = cupsFileRead(fp, line, linesize);
+ 	else
+@@ -2700,12 +2764,17 @@ skip_page(cups_file_t *fp,		/* I - File to read from */
+           size_t      linesize)		/* I - Size of line buffer */
+ {
+   int	level;				/* Embedded document level */
++  int	progress = 0;
+
++  progress = job_progress;
+
+   level = 0;
+
+   while ((linelen = cupsFileGetLine(fp, line, linesize)) > 0)
+   {
++    if (progress > 0) // To start after PAGE: info is printed
++      update_progress(++progress);
++
+     if (level == 0 &&
+         (!strncmp(line, "%%Page:", 7) || !strncmp(line, "%%Trailer", 9)))
+       break;

@@ -1,0 +1,58 @@
+diff -urN cups.orig/filter/rastertopwg.c cups/filter/rastertopwg.c
+--- cups.orig/filter/rastertopwg.c	2013-02-07 10:37:50.713209800 +0900
++++ cups/filter/rastertopwg.c	2013-02-07 10:46:40.269209737 +0900
+@@ -408,11 +408,14 @@
+    /*
+     * Copy raster data...
+     */
++	int total		= page_top + page_bottom + inheader.cupsHeight;
++	int progress	= 0;
+ 
+     line = malloc(linesize);
+ 
+     memset(line, white, linesize);
+     for (y = page_top; y > 0; y --)
++	{
+       if (!cupsRasterWritePixels(outras, line, outheader.cupsBytesPerLine))
+       {
+ 	_cupsLangPrintFilter(stderr, "ERROR", _("Error sending raster data."));
+@@ -420,6 +423,11 @@
+ 	        page_top - y + 1, page);
+ 	return (1);
+       }
++	  progress = page_top - y + 1;
++	  if ((progress & 127) == 0) {
++		  fprintf(stderr,"ATTR: job-media-progress=%d\n", 100 * progress / total);
++	  }
++	}
+ 
+     for (y = inheader.cupsHeight; y > 0; y --)
+     {
+@@ -431,10 +439,15 @@
+ 	        inheader.cupsHeight - y + page_top + 1, page);
+ 	return (1);
+       }
++	  progress = inheader.cupsHeight + page_top - y + 1;
++	  if ((progress & 127) == 0) {
++		  fprintf(stderr,"ATTR: job-media-progress=%d\n", 100 * progress / total);
++	  }
+     }
+ 
+     memset(line, white, linesize);
+     for (y = page_bottom; y > 0; y --)
++	{
+       if (!cupsRasterWritePixels(outras, line, outheader.cupsBytesPerLine))
+       {
+ 	_cupsLangPrintFilter(stderr, "ERROR", _("Error sending raster data."));
+@@ -442,6 +455,11 @@
+ 	        page_bottom - y + page_top + inheader.cupsHeight + 1, page);
+ 	return (1);
+       }
++	  progress = page_bottom - y + page_top + inheader.cupsHeight + 1;
++	  if ((progress & 127) == 0) {
++		  fprintf(stderr,"ATTR: job-media-progress=%d\n", 100 * progress / total);
++	  }
++	}
+ 
+     free(line);
+   }

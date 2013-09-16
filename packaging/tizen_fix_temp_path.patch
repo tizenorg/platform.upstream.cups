@@ -1,0 +1,147 @@
+diff -urN cups-1.6.1.orig/scheduler/conf.c cups-1.6.1/scheduler/conf.c
+--- cups-1.6.1.orig/scheduler/conf.c	2012-12-21 20:45:11.986246073 +0900
++++ cups-1.6.1/scheduler/conf.c	2012-12-21 21:16:07.838245852 +0900
+@@ -630,7 +630,7 @@
+   cupsdSetStringf(&ServerHeader, "CUPS/%d.%d", CUPS_VERSION_MAJOR,
+                   CUPS_VERSION_MINOR);
+   cupsdSetString(&StateDir, CUPS_STATEDIR);
+-  cupsdSetString(&PidFile, "/var/run/cups/cupsd.pid");
++  cupsdSetString(&PidFile, "/opt/var/run/cups/cupsd.pid");
+ 
+   if (!strcmp(CUPS_DEFAULT_PRINTCAP, "/etc/printers.conf"))
+     PrintcapFormat = PRINTCAP_SOLARIS;
+diff -urN cups-1.6.1.orig/scheduler/main.c cups-1.6.1/scheduler/main.c
+--- cups-1.6.1.orig/scheduler/main.c	2012-12-21 20:45:11.986246073 +0900
++++ cups-1.6.1/scheduler/main.c	2012-12-21 21:26:15.526245779 +0900
+@@ -629,10 +629,10 @@
+   * printing...
+   */
+ 
+-  if ((fp = cupsFileOpen("/var/spool/lp/SCHEDLOCK", "w")) == NULL)
++  if ((fp = cupsFileOpen("/opt/var/spool/lp/SCHEDLOCK", "w")) == NULL)
+   {
+     syslog(LOG_LPR, "Unable to create fake lpsched lock file "
+-                    "\"/var/spool/lp/SCHEDLOCK\"\' - %s!",
++                    "\"/opt/var/spool/lp/SCHEDLOCK\"\' - %s!",
+            strerror(errno));
+   }
+   else
+@@ -1217,9 +1217,9 @@
+   * running...
+   */
+ 
+-  if (!stat("/var/spool/lp/FIFO", &statbuf))
++  if (!stat("/opt/var/spool/lp/FIFO", &statbuf))
+     if (!S_ISFIFO(statbuf.st_mode))
+-      unlink("/var/spool/lp/SCHEDLOCK");
++      unlink("/opt/var/spool/lp/SCHEDLOCK");
+ #endif /* __sgi */
+ 
+   cupsdStopSelect();
+diff -urN cups-1.6.1.orig/scheduler/printers.c cups-1.6.1/scheduler/printers.c
+--- cups-1.6.1.orig/scheduler/printers.c	2012-12-21 20:45:11.986246073 +0900
++++ cups-1.6.1/scheduler/printers.c	2012-12-21 21:27:17.414245772 +0900
+@@ -781,23 +781,23 @@
+   */
+ 
+ #ifdef __sgi
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/interface/%s", p->name);
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/interface/%s", p->name);
+   unlink(filename);
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/gui_interface/ELF/%s.gui",
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/gui_interface/ELF/%s.gui",
+            p->name);
+   unlink(filename);
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/activeicons/%s", p->name);
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/activeicons/%s", p->name);
+   unlink(filename);
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/pod/%s.config", p->name);
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/pod/%s.config", p->name);
+   unlink(filename);
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/pod/%s.status", p->name);
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/pod/%s.status", p->name);
+   unlink(filename);
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/member/%s", p->name);
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/member/%s", p->name);
+   unlink(filename);
+ #endif /* __sgi */
+ 
+@@ -5304,7 +5304,7 @@
+   * printer we have...
+   */
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/interface/%s", p->name);
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/interface/%s", p->name);
+ 
+   if (p->type & CUPS_PRINTER_CLASS)
+     unlink(filename);
+@@ -5340,7 +5340,7 @@
+   * we use (the actual device URI can confuse some apps...)
+   */
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/member/%s", p->name);
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/member/%s", p->name);
+ 
+   if (p->type & CUPS_PRINTER_CLASS)
+     unlink(filename);
+@@ -5366,7 +5366,7 @@
+   * PrintcapGUI option.
+   */
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/gui_interface/ELF/%s.gui", p->name);
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/gui_interface/ELF/%s.gui", p->name);
+ 
+   if (p->type & CUPS_PRINTER_CLASS)
+     unlink(filename);
+@@ -5386,7 +5386,7 @@
+   * the printer location and device.
+   */
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/pod/%s.config", p->name);
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/pod/%s.config", p->name);
+ 
+   if (p->type & CUPS_PRINTER_CLASS)
+     unlink(filename);
+@@ -5398,8 +5398,8 @@
+     cupsFilePrintf(fp, "Location Code      | %s\n", p->location ? p->location : "");
+     cupsFilePrintf(fp, "Physical Location  | %s\n", p->info ? p->info : "");
+     cupsFilePrintf(fp, "Port Path          | %s\n", p->device_uri);
+-    cupsFilePrintf(fp, "Config Path        | /var/spool/lp/pod/%s.config\n", p->name);
+-    cupsFilePrintf(fp, "Active Status Path | /var/spool/lp/pod/%s.status\n", p->name);
++    cupsFilePrintf(fp, "Config Path        | /opt/var/spool/lp/pod/%s.config\n", p->name);
++    cupsFilePrintf(fp, "Active Status Path | /opt/var/spool/lp/pod/%s.status\n", p->name);
+     cupsFilePuts(fp, "Status Update Wait | 10 seconds\n");
+ 
+     cupsFileClose(fp);
+@@ -5430,7 +5430,7 @@
+     * provide the current status of the printer.
+     */
+ 
+-    snprintf(filename, sizeof(filename), "/var/spool/lp/pod/%s.status", p->name);
++    snprintf(filename, sizeof(filename), "/opt/var/spool/lp/pod/%s.status", p->name);
+ 
+     if (p->type & CUPS_PRINTER_CLASS)
+       unlink(filename);
+@@ -5484,7 +5484,7 @@
+     * NetUnknown=11		# 0xB (Faulted due to unknown reason)
+     */
+ 
+-    snprintf(filename, sizeof(filename), "/var/spool/lp/activeicons/%s", p->name);
++    snprintf(filename, sizeof(filename), "/opt/var/spool/lp/activeicons/%s", p->name);
+ 
+     if (p->type & CUPS_PRINTER_CLASS)
+       unlink(filename);
+@@ -5519,7 +5519,7 @@
+   * the default printer.
+   */
+ 
+-  snprintf(filename, sizeof(filename), "/var/spool/lp/default");
++  snprintf(filename, sizeof(filename), "/opt/var/spool/lp/default");
+ 
+   if (DefaultPrinter != NULL)
+   {

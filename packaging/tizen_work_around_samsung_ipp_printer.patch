@@ -1,0 +1,12 @@
+diff -urN cups.orig/backend/ipp.c cups/backend/ipp.c
+--- cups.orig/backend/ipp.c	2013-01-07 20:42:18.854953789 +0900
++++ cups/backend/ipp.c	2013-01-07 20:43:16.274953676 +0900
+@@ -1282,7 +1282,7 @@
+   * there are enough broken printers out there that we need this for now...
+   */
+ 
+-  if (version == 10)
++  if (version == 10 || version == 11)
+     create_job = send_document = 0;
+ 
+  /*

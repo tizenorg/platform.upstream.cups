@@ -1,0 +1,11 @@
+diff -urN cups-1.6.1.orig/man/Makefile cups-1.6.1/man/Makefile
+--- cups-1.6.1.orig/man/Makefile	2012-12-31 15:42:32.801433813 +0900
++++ cups-1.6.1/man/Makefile	2012-12-21 21:02:27.000000000 +0900
+@@ -39,7 +39,6 @@
+ 		ppdpo.$(MAN1EXT)
+ MAN5	=	classes.conf.$(MAN5EXT) \
+ 		client.conf.$(MAN5EXT) \
+-		cups-files.conf.$(MAN5EXT) \
+ 		cups-snmp.conf.$(MAN5EXT) \
+ 		cupsd.conf.$(MAN5EXT) \
+ 		ipptoolfile.$(MAN5EXT) \

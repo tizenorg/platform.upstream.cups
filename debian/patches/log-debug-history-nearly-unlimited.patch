@@ -1,0 +1,28 @@
+Author: till.kamppeter@gmail.com
+
+Index: cups-1.6.0/scheduler/conf.c
+===================================================================
+--- cups-1.6.0.orig/scheduler/conf.c	2012-07-27 18:17:49.394135542 +0200
++++ cups-1.6.0/scheduler/conf.c	2012-07-27 18:24:39.094130056 +0200
+@@ -716,7 +716,7 @@
+   KeepAlive                = TRUE;
+   KeepAliveTimeout         = DEFAULT_KEEPALIVE;
+   ListenBackLog            = SOMAXCONN;
+-  LogDebugHistory          = 200;
++  LogDebugHistory          = 99999;
+   LogFilePerm              = CUPS_DEFAULT_LOG_FILE_PERM;
+   LogLevel                 = CUPSD_LOG_WARN;
+   LogTimeFormat            = CUPSD_TIME_STANDARD;
+Index: cups-1.6.0/scheduler/conf.h
+===================================================================
+--- cups-1.6.0.orig/scheduler/conf.h	2012-07-27 16:53:22.590203425 +0200
++++ cups-1.6.0/scheduler/conf.h	2012-07-27 18:24:39.094130056 +0200
+@@ -165,7 +165,7 @@
+ 					/* Allow overrides? */
+ 			ConfigFilePerm		VALUE(0640),
+ 					/* Permissions for config files */
+-			LogDebugHistory		VALUE(200),
++			LogDebugHistory		VALUE(99999),
+ 					/* Amount of automatic debug history */
+ 			FatalErrors		VALUE(CUPSD_FATAL_CONFIG),
+ 					/* Which errors are fatal? */

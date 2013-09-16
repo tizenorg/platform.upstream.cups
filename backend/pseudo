@@ -18,6 +18,10 @@
 if test $# = 0; then
 	echo 'direct pseudo:///deskjet "HP DeskJet" "HP DeskJet (pseudo)" "MFG:HP;MDL:DeskJet;CMD:PCL;" "Nowhere"'
 	echo 'direct pseudo:///laserjet "HP LaserJet" "HP LaserJet (pseudo)" "MFG:HP;MDL:LaserJet;CMD:PCL;" "Nowhere"'
+    echo 'direct usb://Samsung/CLP-360%20Series?serial=CN2AVBXGBY05KC "Samsung CLP-360 Series" "Samsung CLP-360 Series" "MFG:Samsung;MDL:CLP-360 Series;CMD:SPL;" "Nowhere"'
+    echo 'direct usb://Samsung/CLX-3160%20Series?serial=CN2AVBX "Samsung CLX-3160 Series" "Samsung CLX-3160 Series" "MFG:Samsung;MDL:CLX-3160 Series;CMD:SPL;" "Nowhere"'
+    echo 'direct usb://Samsung/SCX-4x21%20Series?serial=CN2AVBXGBYC "Samsung SCX-4x21 Series" "Samsung SCX-4x21 Series" "MFG:Samsung;MDL:SCX-4x21 Series;CMD:SPL;" "Nowhere"'
+    echo 'direct usb://Samsung/ML-371x%20Series?serial=CN2AVBXGB "Samsung ML-371x Series" "Samsung ML-371x Series" "MFG:Samsung;MDL:ML-371x Series;CMD:SPL;" "Nowhere"'
 	exit 0
 fi
 

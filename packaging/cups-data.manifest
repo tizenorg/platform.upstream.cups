@@ -1,0 +1,9 @@
+<manifest>
+	<assign>
+		<filesystem path="/usr/lib/systemd/system/cups.service" label="_" exec_label="_" />
+		<filesystem path="/usr/lib/systemd/system/multi-user.target.wants/cups.service" label="_" exec_label="_" />
+	</assign>
+	<request>
+		<domain name="org.tizen.mobileprint"/>
+	</request>
+</manifest>
