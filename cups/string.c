@@ -1,5 +1,5 @@
 /*
- * "$Id: string.c 9793 2011-05-20 03:49:49Z mike $"
+ * "$Id: string.c 11173 2013-07-23 12:31:34Z msweet $"
  *
  *   String functions for CUPS.
  *
@@ -755,5 +755,5 @@ compare_sp_items(_cups_sp_item_t *a,	/* I - First item */
 
 
 /*
- * End of "$Id: string.c 9793 2011-05-20 03:49:49Z mike $".
+ * End of "$Id: string.c 11173 2013-07-23 12:31:34Z msweet $".
  */

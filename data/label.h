@@ -1,5 +1,5 @@
 /*
- * "$Id: label.h 7304 2008-02-14 01:52:22Z mike $"
+ * "$Id: label.h 11173 2013-07-23 12:31:34Z msweet $"
  *
  *   This file contains model number definitions for the CUPS sample
  *   label printer driver.
@@ -24,5 +24,5 @@
 #define INTELLITECH_PCL	0x20		/* Intellitech PCL-based printers */
 
 /*
- * End of "$Id: label.h 7304 2008-02-14 01:52:22Z mike $".
+ * End of "$Id: label.h 11173 2013-07-23 12:31:34Z msweet $".
  */

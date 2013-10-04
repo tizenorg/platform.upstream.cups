@@ -1,9 +1,9 @@
 /*
- * "$Id: request.c 10015 2011-09-21 22:09:29Z mike $"
+ * "$Id: request.c 11176 2013-07-23 13:24:57Z msweet $"
  *
  *   IPP utilities for CUPS.
  *
- *   Copyright 2007-2011 by Apple Inc.
+ *   Copyright 2007-2013 by Apple Inc.
  *   Copyright 1997-2007 by Easy Software Products.
  *
  *   These coded instructions, statements, and computer programs are the
@@ -51,9 +51,9 @@
 /*
  * 'cupsDoFileRequest()' - Do an IPP request with a file.
  *
- * This function sends the IPP request to the specified server, retrying
- * and authenticating as necessary.  The request is freed with @link ippDelete@
- * after receiving a valid IPP response.
+ * This function sends the IPP request and attached file to the specified
+ * server, retrying and authenticating as necessary.  The request is freed with
+ * @link ippDelete@.
  */
 
 ipp_t *					/* O - Response data */
@@ -102,17 +102,17 @@ cupsDoFileRequest(http_t     *http,	/* I - Connection to server or @code CUPS_HT
 /*
  * 'cupsDoIORequest()' - Do an IPP request with file descriptors.
  *
- * This function sends the IPP request to the specified server, retrying
- * and authenticating as necessary.  The request is freed with ippDelete()
- * after receiving a valid IPP response.
+ * This function sends the IPP request with the optional input file "infile" to
+ * the specified server, retrying and authenticating as necessary.  The request
+ * is freed with @link ippDelete@.
  *
- * If "infile" is a valid file descriptor, cupsDoIORequest() copies
+ * If "infile" is a valid file descriptor, @code cupsDoIORequest@ copies
  * all of the data from the file after the IPP request message.
  *
- * If "outfile" is a valid file descriptor, cupsDoIORequest() copies
+ * If "outfile" is a valid file descriptor, @code cupsDoIORequest@ copies
  * all of the data after the IPP response message to the file.
  *
- * @since CUPS 1.3/Mac OS X 10.5@
+ * @since CUPS 1.3/OS X 10.5@
  */
 
 ipp_t *					/* O - Response data */
@@ -309,8 +309,7 @@ cupsDoIORequest(http_t     *http,	/* I - Connection to server or @code CUPS_HTTP
  * 'cupsDoRequest()' - Do an IPP request.
  *
  * This function sends the IPP request to the specified server, retrying
- * and authenticating as necessary.  The request is freed with ippDelete()
- * after receiving a valid IPP response.
+ * and authenticating as necessary.  The request is freed with @link ippDelete@.
  */
 
 ipp_t *					/* O - Response data */
@@ -331,11 +330,11 @@ cupsDoRequest(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_
  * 'cupsGetResponse()' - Get a response to an IPP request.
  *
  * Use this function to get the response for an IPP request sent using
- * cupsSendDocument() or cupsSendRequest(). For requests that return
- * additional data, use httpRead() after getting a successful response,
- * otherwise call httpFlush() to complete the response processing.
+ * @link cupsSendRequest@. For requests that return additional data, use
+ * @link cupsReadResponseData@ after getting a successful response,
+ * otherwise call @link httpFlush@ to complete the response processing.
  *
- * @since CUPS 1.4/Mac OS X 10.6@
+ * @since CUPS 1.4/OS X 10.6@
  */
 
 ipp_t *					/* O - Response or @code NULL@ on HTTP error */
@@ -415,9 +414,8 @@ cupsGetResponse(http_t     *http,	/* I - Connection to server or @code CUPS_HTTP
       ippDelete(response);
       response = NULL;
 
-      _cupsSetError(IPP_SERVICE_UNAVAILABLE, NULL, 0);
       http->status = status = HTTP_ERROR;
-      http->error  = EIO;
+      http->error  = EINVAL;
     }
   }
   else if (status != HTTP_ERROR)
@@ -476,17 +474,14 @@ cupsGetResponse(http_t     *http,	/* I - Connection to server or @code CUPS_HTTP
                   attr ? attr->values[0].string.text :
 		      ippErrorString(response->request.status.status_code), 0);
   }
-  else if (status == HTTP_ERROR)
-    _cupsSetError(IPP_INTERNAL_ERROR, strerror(http->error), 0);
-  else if (status != HTTP_OK)
-    _cupsSetHTTPError(status);
 
   return (response);
 }
 
 
 /*
- * 'cupsLastError()' - Return the last IPP status code.
+ * 'cupsLastError()' - Return the last IPP status code received on the current
+ *                     thread.
  */
 
 ipp_status_t				/* O - IPP status code from last request */
@@ -497,9 +492,10 @@ cupsLastError(void)
 
 
 /*
- * 'cupsLastErrorString()' - Return the last IPP status-message.
+ * 'cupsLastErrorString()' - Return the last IPP status-message received on the
+ *                           current thread.
  *
- * @since CUPS 1.2/Mac OS X 10.5@
+ * @since CUPS 1.2/OS X 10.5@
  */
 
 const char *				/* O - status-message text from last request */
@@ -542,10 +538,11 @@ _cupsNextDelay(int current,		/* I  - Current delay value or 0 */
 /*
  * 'cupsReadResponseData()' - Read additional data after the IPP response.
  *
- * This function is used after cupsGetResponse() to read the PPD or document
- * files for CUPS_GET_PPD and CUPS_GET_DOCUMENT requests, respectively.
+ * This function is used after @link cupsGetResponse@ to read the PPD or document
+ * files from @code CUPS_GET_PPD@ and @code CUPS_GET_DOCUMENT@ requests,
+ * respectively.
  *
- * @since CUPS 1.4/Mac OS X 10.6@
+ * @since CUPS 1.4/OS X 10.6@
  */
 
 ssize_t					/* O - Bytes read, 0 on EOF, -1 on error */
@@ -584,15 +581,19 @@ cupsReadResponseData(
 /*
  * 'cupsSendRequest()' - Send an IPP request.
  *
- * Use httpWrite() to write any additional data (document, PPD file, etc.)
- * for the request, cupsGetResponse() to get the IPP response, and httpRead()
- * to read any additional data following the response. Only one request can be
- * sent/queued at a time.
+ * Use @link cupsWriteRequestData@ to write any additional data (document, PPD
+ * file, etc.) for the request, @link cupsGetResponse@ to get the IPP response,
+ * and @link cupsReadResponseData@ to read any additional data following the
+ * response. Only one request can be sent/queued at a time per @code http_t@
+ * connection.
  *
- * Unlike cupsDoFileRequest(), cupsDoIORequest(), and cupsDoRequest(), the
- * request is not freed.
+ * Returns the initial HTTP status code, which will be @code HTTP_CONTINUE@
+ * on a successful send of the request.
  *
- * @since CUPS 1.4/Mac OS X 10.6@
+ * Note: Unlike @link cupsDoFileRequest@, @link cupsDoIORequest@, and
+ * @link cupsDoRequest@, the request is NOT freed with @link ippDelete@.
+ *
+ * @since CUPS 1.4/OS X 10.6@
  */
 
 http_status_t				/* O - Initial HTTP status */
@@ -643,11 +644,10 @@ cupsSendRequest(http_t     *http,	/* I - Connection to server or @code CUPS_HTTP
   }
   else if (http->state != HTTP_WAITING)
   {
-    DEBUG_printf(("1cupsSendRequest: Unknown HTTP state (%d), bailing.",
-                  http->state));
-    _cupsSetError(IPP_INTERNAL_ERROR, strerror(EINVAL), 0);
-
-    return (HTTP_ERROR);
+    DEBUG_printf(("1cupsSendRequest: Unknown HTTP state (%d), "
+                  "reconnecting.", http->state));
+    if (httpReconnect(http))
+      return (HTTP_ERROR);
   }
 
 #ifdef HAVE_SSL
@@ -885,7 +885,7 @@ cupsSendRequest(http_t     *http,	/* I - Connection to server or @code CUPS_HTTP
  * This function is used after @link cupsSendRequest@ to provide a PPD and
  * after @link cupsStartDocument@ to provide a document file.
  *
- * @since CUPS 1.4/Mac OS X 10.6@
+ * @since CUPS 1.4/OS X 10.6@
  */
 
 http_status_t				/* O - @code HTTP_CONTINUE@ if OK or HTTP status on error */
@@ -1003,6 +1003,31 @@ _cupsConnect(void)
 
       httpClose(cg->http);
       cg->http = NULL;
+    }
+    else
+    {
+     /*
+      * Same server, see if the connection is still established...
+      */
+
+      char	ch;			/* Connection check byte */
+      ssize_t	n;			/* Number of bytes */
+
+#ifdef WIN32
+      if ((n = recv(cg->http->fd, &ch, 1, MSG_PEEK)) == 0 ||
+          (n < 0 && WSAGetLastError() != WSAEWOULDBLOCK))
+#else
+      if ((n = recv(cg->http->fd, &ch, 1, MSG_PEEK | MSG_DONTWAIT)) == 0 ||
+          (n < 0 && errno != EWOULDBLOCK))
+#endif /* WIN32 */
+      {
+       /*
+        * Nope, close the connection...
+        */
+
+	httpClose(cg->http);
+	cg->http = NULL;
+      }
     }
   }
 
@@ -1145,5 +1170,5 @@ _cupsSetHTTPError(http_status_t status)	/* I - HTTP status code */
 
 
 /*
- * End of "$Id: request.c 10015 2011-09-21 22:09:29Z mike $".
+ * End of "$Id: request.c 11176 2013-07-23 13:24:57Z msweet $".
  */

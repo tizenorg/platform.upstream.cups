@@ -1,5 +1,5 @@
 /*
- * "$Id: lpinfo.c 9384 2010-11-22 07:06:39Z mike $"
+ * "$Id: lpinfo.c 11173 2013-07-23 12:31:34Z msweet $"
  *
  *   "lpinfo" command for CUPS.
  *
@@ -494,5 +494,5 @@ show_models(
 
 
 /*
- * End of "$Id: lpinfo.c 9384 2010-11-22 07:06:39Z mike $".
+ * End of "$Id: lpinfo.c 11173 2013-07-23 12:31:34Z msweet $".
  */

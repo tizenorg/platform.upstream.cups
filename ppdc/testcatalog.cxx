@@ -1,5 +1,5 @@
 //
-// "$Id: testcatalog.cxx 8487 2009-04-03 23:58:57Z mike $"
+// "$Id: testcatalog.cxx 11173 2013-07-23 12:31:34Z msweet $"
 //
 //   Test program for message catalog class.
 //
@@ -59,5 +59,5 @@ main(int  argc,				// I - Number of command-line arguments
 
 
 //
-// End of "$Id: testcatalog.cxx 8487 2009-04-03 23:58:57Z mike $".
+// End of "$Id: testcatalog.cxx 11173 2013-07-23 12:31:34Z msweet $".
 //

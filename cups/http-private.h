@@ -1,9 +1,9 @@
 /*
- * "$Id: http-private.h 9960 2011-09-02 22:37:14Z mike $"
+ * "$Id: http-private.h 11173 2013-07-23 12:31:34Z msweet $"
  *
  *   Private HTTP definitions for CUPS.
  *
- *   Copyright 2007-2011 by Apple Inc.
+ *   Copyright 2007-2012 by Apple Inc.
  *   Copyright 1997-2007 by Easy Software Products, all rights reserved.
  *
  *   These coded instructions, statements, and computer programs are the
@@ -44,29 +44,14 @@
 #  ifdef HAVE_GSSAPI
 #    ifdef HAVE_GSS_GSSAPI_H
 #      include <GSS/gssapi.h>
-#      ifdef HAVE_GSSAPI_GENERIC_H
-#        include <GSS/gssapi_generic.h>
-#      endif /* HAVE_GSSAPI_GENERIC_H */
-#      ifdef HAVE_GSSAPI_KRB5_H
-#        include <GSS/gssapi_krb5.h>
-#      endif /* HAVE_GSSAPI_KRB5_H */
 #    elif defined(HAVE_GSSAPI_GSSAPI_H)
 #      include <gssapi/gssapi.h>
-#      ifdef HAVE_GSSAPI_GENERIC_H
-#        include <gssapi/gssapi_generic.h>
-#      endif /* HAVE_GSSAPI_GENERIC_H */
-#      ifdef HAVE_GSSAPI_KRB5_H
-#        include <gssapi/gssapi_krb5.h>
-#      endif /* HAVE_GSSAPI_KRB5_H */
 #    elif defined(HAVE_GSSAPI_H)
 #      include <gssapi.h>
 #    endif /* HAVE_GSS_GSSAPI_H */
 #    ifndef HAVE_GSS_C_NT_HOSTBASED_SERVICE
 #      define GSS_C_NT_HOSTBASED_SERVICE gss_nt_service_name
 #    endif /* !HAVE_GSS_C_NT_HOSTBASED_SERVICE */
-#    ifdef HAVE_KRB5_H
-#      include <krb5.h>
-#    endif /* HAVE_KRB5_H */
 #  endif /* HAVE_GSSAPI */
 
 #  ifdef HAVE_AUTHORIZATION_H
@@ -154,6 +139,7 @@ extern "C" {
 #define _HTTP_RESOLVE_DEFAULT	0	/* Just resolve with default options */
 #define _HTTP_RESOLVE_STDERR	1	/* Log resolve progress to stderr */
 #define _HTTP_RESOLVE_FQDN	2	/* Resolve to a FQDN */
+#define _HTTP_RESOLVE_FAXOUT	4	/* Resolve FaxOut service? */
 
 
 /*
@@ -404,5 +390,5 @@ extern int		_httpWait(http_t *http, int msec, int usessl);
 #endif /* !_CUPS_HTTP_PRIVATE_H_ */
 
 /*
- * End of "$Id: http-private.h 9960 2011-09-02 22:37:14Z mike $".
+ * End of "$Id: http-private.h 11173 2013-07-23 12:31:34Z msweet $".
  */

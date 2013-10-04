@@ -1,5 +1,5 @@
 /*
- * "$Id: array.h 9348 2010-11-02 21:37:38Z mike $"
+ * "$Id: array.h 11173 2013-07-23 12:31:34Z msweet $"
  *
  *   Sorted array definitions for CUPS.
  *
@@ -88,5 +88,5 @@ extern void		*cupsArrayUserData(cups_array_t *a) _CUPS_API_1_2;
 #endif /* !_CUPS_ARRAY_H_ */
 
 /*
- * End of "$Id: array.h 9348 2010-11-02 21:37:38Z mike $".
+ * End of "$Id: array.h 11173 2013-07-23 12:31:34Z msweet $".
  */

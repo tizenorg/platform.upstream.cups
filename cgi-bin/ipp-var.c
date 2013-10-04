@@ -1,9 +1,9 @@
 /*
- * "$Id: ipp-var.c 9793 2011-05-20 03:49:49Z mike $"
+ * "$Id: ipp-var.c 11173 2013-07-23 12:31:34Z msweet $"
  *
  *   CGI <-> IPP variable routines for CUPS.
  *
- *   Copyright 2007-2011 by Apple Inc.
+ *   Copyright 2007-2012 by Apple Inc.
  *   Copyright 1997-2007 by Easy Software Products.
  *
  *   These coded instructions, statements, and computer programs are the
@@ -554,8 +554,8 @@ cgiPrintCommand(http_t     *http,	/* I - Connection to server */
   ipp_t		*request,		/* Get-Job-Attributes request */
 		*response;		/* Get-Job-Attributes response */
   ipp_attribute_t *attr;		/* Current job attribute */
-  static const char const *job_attrs[] =/* Job attributes we want */
-		{
+  static const char * const job_attrs[] =
+		{			/* Job attributes we want */
 		  "job-state",
 		  "job-printer-state-message"
 		};
@@ -792,7 +792,7 @@ cgiPrintTestPage(http_t     *http,	/* I - Connection to server */
   cgiStartHTML(cgiText(_("Print Test Page")));
 
   if (cupsLastError() > IPP_OK_CONFLICT)
-    cgiShowIPPError(_("Unable to print test page:"));
+    cgiShowIPPError(_("Unable to print test page"));
   else
   {
     cgiSetVariable("PRINTER_NAME", dest);
@@ -1219,7 +1219,7 @@ cgiSetIPPObjectVars(
 	             "%dx%d%s", attr->values[i].resolution.xres,
 		     attr->values[i].resolution.yres,
 		     attr->values[i].resolution.units == IPP_RES_PER_INCH ?
-			 "dpi" : "dpc");
+			 "dpi" : "dpcm");
 	    break;
 
 	case IPP_TAG_URI :
@@ -1432,7 +1432,7 @@ cgiShowJobs(http_t     *http,		/* I - Connection to server */
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL,
         	 "ipp://localhost/");
 
-  if ((which_jobs = cgiGetVariable("which_jobs")) != NULL)
+  if ((which_jobs = cgiGetVariable("which_jobs")) != NULL && *which_jobs)
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "which-jobs",
                  NULL, which_jobs);
 
@@ -1480,10 +1480,11 @@ cgiShowJobs(http_t     *http,		/* I - Connection to server */
     if (first < 0)
       first = 0;
 
-    if ((var = cgiGetVariable("ORDER")) != NULL)
+    if ((var = cgiGetVariable("ORDER")) != NULL && *var)
       ascending = !_cups_strcasecmp(var, "asc");
     else
-      ascending = !which_jobs || !_cups_strcasecmp(which_jobs, "not-completed");
+      ascending = !which_jobs || !*which_jobs ||
+                  !_cups_strcasecmp(which_jobs, "not-completed");
 
     section = cgiGetVariable("SECTION");
 
@@ -1588,5 +1589,5 @@ cgiText(const char *message)		/* I - Message */
 
 
 /*
- * End of "$Id: ipp-var.c 9793 2011-05-20 03:49:49Z mike $".
+ * End of "$Id: ipp-var.c 11173 2013-07-23 12:31:34Z msweet $".
  */

@@ -1,9 +1,9 @@
 /*
- * "$Id: main.c 9783 2011-05-18 20:44:16Z mike $"
+ * "$Id: main.c 11173 2013-07-23 12:31:34Z msweet $"
  *
  *   Main loop for the CUPS scheduler.
  *
- *   Copyright 2007-2011 by Apple Inc.
+ *   Copyright 2007-2012 by Apple Inc.
  *   Copyright 1997-2007 by Easy Software Products, all rights reserved.
  *
  *   These coded instructions, statements, and computer programs are the
@@ -65,9 +65,14 @@
 #if defined(HAVE_MALLOC_H) && defined(HAVE_MALLINFO)
 #  include <malloc.h>
 #endif /* HAVE_MALLOC_H && HAVE_MALLINFO */
+
 #ifdef HAVE_NOTIFY_H
 #  include <notify.h>
 #endif /* HAVE_NOTIFY_H */
+
+#ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+#endif /* HAVE_SYS_PARAM_H */
 
 
 /*
@@ -84,7 +89,7 @@ static void		sigchld_handler(int sig);
 static void		sighup_handler(int sig);
 static void		sigterm_handler(int sig);
 static long		select_timeout(int fds);
-static void		usage(int status);
+static void		usage(int status) __attribute__((noreturn));
 
 
 /*
@@ -120,7 +125,6 @@ main(int  argc,				/* I - Number of command-line args */
   cupsd_listener_t	*lis;		/* Current listener */
   time_t		current_time,	/* Current time */
 			activity,	/* Client activity timer */
-			browse_time,	/* Next browse send time */
 			senddoc_time,	/* Send-Document time */
 			expire_time,	/* Subscription expire time */
 			report_time,	/* Malloc/client/job report time */
@@ -208,7 +212,6 @@ main(int  argc,				/* I - Number of command-line args */
 
                 char *current;		/* Current directory */
 
-
 	       /*
 	        * Allocate a buffer for the current working directory to
 		* reduce run-time stack usage; this approximates the
@@ -272,6 +275,29 @@ main(int  argc,				/* I - Number of command-line args */
 	      UseProfiles = 0;
 	      break;
 
+          case 's' : /* Set cups-files.conf location */
+              i ++;
+	      if (i >= argc)
+	      {
+	        _cupsLangPuts(stderr, _("cupsd: Expected cups-files.conf "
+	                                "filename after \"-s\" option."));
+	        usage(1);
+	      }
+
+              if (argv[i][0] != '/')
+	      {
+	       /*
+	        * Relative filename not allowed...
+		*/
+
+	        _cupsLangPuts(stderr, _("cupsd: Relative cups-files.conf "
+	                                "filename not allowed."));
+	        usage(1);
+              }
+
+	      cupsdSetString(&CupsFilesFile, argv[i]);
+	      break;
+
 #ifdef __APPLE__
           case 'S' : /* Disable system management functions */
               fputs("cupsd: -S (disable system management) for internal "
@@ -299,7 +325,39 @@ main(int  argc,				/* I - Number of command-line args */
     }
 
   if (!ConfigurationFile)
+  {
     cupsdSetString(&ConfigurationFile, CUPS_SERVERROOT "/cupsd.conf");
+    cupsdSetString(&CupsFilesFile, CUPS_SERVERROOT "/cups-files.conf");
+  }
+
+  if (!CupsFilesFile)
+  {
+    char	*filename,		/* Copy of cupsd.conf filename */
+		*slash;			/* Final slash in cupsd.conf filename */
+    size_t	len;			/* Size of buffer */
+
+    len = strlen(ConfigurationFile) + 15;
+    if ((filename = malloc(len)) == NULL)
+    {
+      _cupsLangPrintf(stderr,
+		      _("cupsd: Unable to get path to "
+			"cups-files.conf file."));
+      return (1);
+    }
+
+    strlcpy(filename, ConfigurationFile, len);
+    if ((slash = strrchr(filename, '/')) == NULL)
+    {
+      _cupsLangPrintf(stderr,
+		      _("cupsd: Unable to get path to "
+			"cups-files.conf file."));
+      return (1);
+    }
+
+    strlcpy(slash, "/cups-files.conf", len - (slash - filename));
+    cupsdSetString(&CupsFilesFile, filename);
+    free(filename);
+  }
 
  /*
   * If the user hasn't specified "-f", run in the background...
@@ -366,15 +424,15 @@ main(int  argc,				/* I - Number of command-line args */
       }
     }
 
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) && OpenBSD < 201211
    /*
     * Call _thread_sys_closefrom() so the child process doesn't reset the
     * parent's file descriptors to be blocking.  This is a workaround for a
-    * limitation of userland libpthread on OpenBSD.
+    * limitation of userland libpthread on older versions of OpenBSD.
     */
 
     _thread_sys_closefrom(0);
-#endif /* __OpenBSD__ */
+#endif /* __OpenBSD__ && OpenBSD < 201211 */
 
    /*
     * Since CoreFoundation and DBUS both create fork-unsafe data on execution of
@@ -484,17 +542,11 @@ main(int  argc,				/* I - Number of command-line args */
   */
 
   if (!cupsdReadConfiguration())
-  {
-    if (TestConfigFile)
-      printf("%s contains errors\n", ConfigurationFile);
-    else
-      syslog(LOG_LPR, "Unable to read configuration file \'%s\' - exiting!",
-	     ConfigurationFile);
     return (1);
-  }
   else if (TestConfigFile)
   {
-    printf("%s is OK\n", ConfigurationFile);
+    printf("\"%s\" is OK.\n", CupsFilesFile);
+    printf("\"%s\" is OK.\n", ConfigurationFile);
     return (0);
   }
 
@@ -650,7 +702,6 @@ main(int  argc,				/* I - Number of command-line args */
   */
 
   current_time  = time(NULL);
-  browse_time   = current_time;
   event_time    = current_time;
   expire_time   = current_time;
   fds           = 1;
@@ -766,11 +817,9 @@ main(int  argc,				/* I - Number of command-line args */
     * inactivity...
     */
 
-    if (timeout == 86400 && Launchd && LaunchdTimeout && !NumPolled &&
+    if (timeout == 86400 && Launchd && LaunchdTimeout &&
         !cupsArrayCount(ActiveJobs) &&
-	(!Browsing ||
-	 (!BrowseRemoteProtocols &&
-	  (!BrowseLocalProtocols || !cupsArrayCount(Printers)))))
+	(!Browsing || !BrowseLocalProtocols || !cupsArrayCount(Printers)))
     {
       timeout		= LaunchdTimeout;
       launchd_idle_exit = 1;
@@ -785,9 +834,9 @@ main(int  argc,				/* I - Number of command-line args */
       * Got an error from select!
       */
 
-#ifdef HAVE_DNSSD
+#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
       cupsd_printer_t	*p;		/* Current printer */
-#endif /* HAVE_DNSSD */
+#endif /* HAVE_DNSSD || HAVE_AVAHI */
 
 
       if (errno == EINTR)		/* Just interrupted by a signal */
@@ -812,8 +861,6 @@ main(int  argc,				/* I - Number of command-line args */
 	   i ++, lis = (cupsd_listener_t *)cupsArrayNext(Listeners))
         cupsdLogMessage(CUPSD_LOG_EMERG, "Listeners[%d] = %d", i, lis->fd);
 
-      cupsdLogMessage(CUPSD_LOG_EMERG, "BrowseSocket = %d", BrowseSocket);
-
       cupsdLogMessage(CUPSD_LOG_EMERG, "CGIPipes[0] = %d", CGIPipes[0]);
 
 #ifdef __APPLE__
@@ -830,13 +877,13 @@ main(int  argc,				/* I - Number of command-line args */
 			job->print_pipes[0], job->print_pipes[1],
 			job->back_pipes[0], job->back_pipes[1]);
 
-#ifdef HAVE_DNSSD
+#if defined(HAVE_DNSSD) || defined(HAVE_AVAHI)
       for (p = (cupsd_printer_t *)cupsArrayFirst(Printers);
 	   p;
 	   p = (cupsd_printer_t *)cupsArrayNext(Printers))
         cupsdLogMessage(CUPSD_LOG_EMERG, "printer[%s] reg_name=\"%s\"", p->name,
 	                p->reg_name ? p->reg_name : "(null)");
-#endif /* HAVE_DNSSD */
+#endif /* HAVE_DNSSD || HAVE_AVAHI */
 
       break;
     }
@@ -914,31 +961,6 @@ main(int  argc,				/* I - Number of command-line args */
       expire_time = current_time;
     }
 
-   /*
-    * Update the browse list as needed...
-    */
-
-    if (Browsing)
-    {
-#ifdef HAVE_LIBSLP
-      if ((BrowseRemoteProtocols & BROWSE_SLP) &&
-          BrowseSLPRefresh <= current_time)
-        cupsdUpdateSLPBrowse();
-#endif /* HAVE_LIBSLP */
-
-#ifdef HAVE_LDAP
-      if ((BrowseRemoteProtocols & BROWSE_LDAP) &&
-          BrowseLDAPRefresh <= current_time)
-        cupsdUpdateLDAPBrowse();
-#endif /* HAVE_LDAP */
-    }
-
-    if (Browsing && current_time > browse_time)
-    {
-      cupsdSendBrowseList();
-      browse_time = current_time;
-    }
-
 #ifndef HAVE_AUTHORIZATION_H
    /*
     * Update the root certificate once every 5 minutes if we have client
@@ -953,7 +975,7 @@ main(int  argc,				/* I - Number of command-line args */
       */
 
       cupsdDeleteCert(0);
-      cupsdAddCert(0, "root", NULL);
+      cupsdAddCert(0, "root", cupsdDefaultAuthType());
     }
 #endif /* !HAVE_AUTHORIZATION_H */
 
@@ -998,9 +1020,15 @@ main(int  argc,				/* I - Number of command-line args */
     if ((current_time - senddoc_time) >= 10)
     {
       cupsdCheckJobs();
-      cupsdCleanJobs();
       senddoc_time = current_time;
     }
+
+   /*
+    * Clean job history...
+    */
+
+    if (JobHistoryUpdate && current_time >= JobHistoryUpdate)
+      cupsdCleanJobs();
 
    /*
     * Log statistics at most once a minute when in debug mode...
@@ -1031,8 +1059,6 @@ main(int  argc,				/* I - Number of command-line args */
                       cupsArrayCount(ActiveJobs));
       cupsdLogMessage(CUPSD_LOG_DEBUG, "Report: printers=%d",
                       cupsArrayCount(Printers));
-      cupsdLogMessage(CUPSD_LOG_DEBUG, "Report: printers-implicit=%d",
-                      cupsArrayCount(ImplicitPrinters));
 
       string_count = _cupsStrStatistics(&alloc_bytes, &total_bytes);
       cupsdLogMessage(CUPSD_LOG_DEBUG,
@@ -1140,23 +1166,6 @@ main(int  argc,				/* I - Number of command-line args */
   if (use_sysman)
     cupsdStopSystemMonitor();
 #endif /* __APPLE__ */
-
-#ifdef HAVE_GSSAPI
- /*
-  * Free the scheduler's Kerberos context...
-  */
-
-#  ifdef __APPLE__
- /*
-  * If the weak-linked GSSAPI/Kerberos library is not present, don't try
-  * to use it...
-  */
-
-  if (krb5_init_context != NULL)
-#  endif /* __APPLE__ */
-  if (KerberosContext)
-    krb5_free_context(KerberosContext);
-#endif /* HAVE_GSSAPI */
 
 #ifdef __sgi
  /*
@@ -1317,7 +1326,7 @@ cupsdSetStringf(char       **s,		/* O - New string */
                 const char *f,		/* I - Printf-style format string */
 	        ...)			/* I - Additional args as needed */
 {
-  char		v[4096];		/* Formatting string value */
+  char		v[65536 + 64];		/* Formatting string value */
   va_list	ap;			/* Argument pointer */
   char		*olds;			/* Old string */
 
@@ -1512,10 +1521,8 @@ launchd_checkout(void)
   * shared printers to advertise...
   */
 
-  if (cupsArrayCount(ActiveJobs) || NumPolled ||
-      (Browsing &&
-       (BrowseRemoteProtocols || 
-        (BrowseLocalProtocols && cupsArrayCount(Printers)))))
+  if (cupsArrayCount(ActiveJobs) ||
+      (Browsing && BrowseLocalProtocols && cupsArrayCount(Printers)))
   {
     cupsdLogMessage(CUPSD_LOG_DEBUG,
                     "Creating launchd keepalive file \"" CUPS_KEEPALIVE
@@ -1564,6 +1571,7 @@ process_children(void)
   cupsd_job_t	*job;			/* Current job */
   int		i;			/* Looping var */
   char		name[1024];		/* Process name */
+  const char	*type;			/* Type of program */
 
 
   cupsdLogMessage(CUPSD_LOG_DEBUG2, "process_children()");
@@ -1603,7 +1611,12 @@ process_children(void)
     * Handle completed job filters...
     */
 
-    if (job_id > 0 && (job = cupsdFindJob(job_id)) != NULL)
+    if (job_id > 0)
+      job = cupsdFindJob(job_id);
+    else
+      job  = NULL;
+
+    if (job)
     {
       for (i = 0; job->filters[i]; i ++)
 	if (job->filters[i] == pid)
@@ -1616,12 +1629,18 @@ process_children(void)
 	*/
 
 	if (job->filters[i])
+	{
 	  job->filters[i] = -pid;
+	  type            = "Filter";
+	}
 	else
+	{
 	  job->backend = -pid;
+	  type         = "Backend";
+	}
 
 	if (status && status != SIGTERM && status != SIGKILL &&
-	    status != SIGPIPE && job->status >= 0)
+	    status != SIGPIPE)
 	{
 	 /*
 	  * An error occurred; save the exit status so we know to stop
@@ -1629,22 +1648,35 @@ process_children(void)
 	  *
 	  * A negative status indicates that the backend failed and the
 	  * printer needs to be stopped.
+	  *
+	  * In order to preserve the most serious status, we always log
+	  * when a process dies due to a signal (e.g. SIGABRT, SIGSEGV,
+	  * and SIGBUS) and prefer to log the backend exit status over a
+	  * filter's.
 	  */
 
-	  if (job->filters[i])
-	    job->status = status;	/* Filter failed */
-	  else
-	    job->status = -status;	/* Backend failed */
+	  int old_status = abs(job->status);
+
+          if (WIFSIGNALED(status) ||	/* This process crashed, or */
+              !job->status ||		/* No process had a status, or */
+              (!job->filters[i] && WIFEXITED(old_status)))
+          {				/* Backend and filter didn't crash */
+	    if (job->filters[i])
+	      job->status = status;	/* Filter failed */
+	    else
+	      job->status = -status;	/* Backend failed */
+          }
 
 	  if (job->state_value == IPP_JOB_PROCESSING &&
-	      job->status_level > CUPSD_LOG_ERROR)
+	      job->status_level > CUPSD_LOG_ERROR &&
+	      (job->filters[i] || !WIFEXITED(status)))
 	  {
 	    char	message[1024];	/* New printer-state-message */
 
 
 	    job->status_level = CUPSD_LOG_ERROR;
 
-	    snprintf(message, sizeof(message), "%s failed", name);
+	    snprintf(message, sizeof(message), "%s failed", type);
 
             if (job->printer)
 	    {
@@ -1714,15 +1746,15 @@ process_children(void)
 
     if (status == SIGTERM || status == SIGKILL)
     {
-      cupsdLogMessage(CUPSD_LOG_DEBUG,
-                      "PID %d (%s) was terminated normally with signal %d.",
-                      pid, name, status);
+      cupsdLogJob(job, CUPSD_LOG_DEBUG,
+		  "PID %d (%s) was terminated normally with signal %d.", pid,
+		  name, status);
     }
     else if (status == SIGPIPE)
     {
-      cupsdLogMessage(CUPSD_LOG_DEBUG,
-                      "PID %d (%s) did not catch or ignore signal %d.",
-                      pid, name, status);
+      cupsdLogJob(job, CUPSD_LOG_DEBUG,
+		  "PID %d (%s) did not catch or ignore signal %d.", pid, name,
+		  status);
     }
     else if (status)
     {
@@ -1731,26 +1763,25 @@ process_children(void)
         int code = WEXITSTATUS(status);	/* Exit code */
 
         if (code > 100)
-	  cupsdLogMessage(CUPSD_LOG_DEBUG,
-	                  "PID %d (%s) stopped with status %d (%s)", pid, name,
-			  code, strerror(code - 100));
+	  cupsdLogJob(job, CUPSD_LOG_DEBUG,
+		      "PID %d (%s) stopped with status %d (%s)", pid, name,
+		      code, strerror(code - 100));
 	else
-	  cupsdLogMessage(CUPSD_LOG_DEBUG,
-	                  "PID %d (%s) stopped with status %d.", pid, name,
-			  code);
+	  cupsdLogJob(job, CUPSD_LOG_DEBUG,
+		      "PID %d (%s) stopped with status %d.", pid, name, code);
       }
       else
-	cupsdLogMessage(CUPSD_LOG_ERROR, "PID %d (%s) crashed on signal %d.",
-	                pid, name, WTERMSIG(status));
+	cupsdLogJob(job, CUPSD_LOG_DEBUG, "PID %d (%s) crashed on signal %d.",
+		    pid, name, WTERMSIG(status));
 
       if (LogLevel < CUPSD_LOG_DEBUG)
-        cupsdLogMessage(CUPSD_LOG_INFO,
-	                "Hint: Try setting the LogLevel to \"debug\" to find "
-			"out more.");
+        cupsdLogJob(job, CUPSD_LOG_INFO,
+		    "Hint: Try setting the LogLevel to \"debug\" to find out "
+		    "more.");
     }
     else
-      cupsdLogMessage(CUPSD_LOG_DEBUG, "PID %d (%s) exited with no errors.",
-                      pid, name);
+      cupsdLogJob(job, CUPSD_LOG_DEBUG, "PID %d (%s) exited with no errors.",
+		  pid, name);
   }
 
  /*
@@ -1773,11 +1804,13 @@ select_timeout(int fds)			/* I - Number of descriptors returned */
   long			timeout;	/* Timeout for select */
   time_t		now;		/* Current time */
   cupsd_client_t	*con;		/* Client information */
-  cupsd_printer_t	*p;		/* Printer information */
   cupsd_job_t		*job;		/* Job information */
   cupsd_subscription_t	*sub;		/* Subscription information */
   const char		*why;		/* Debugging aid */
 
+
+  cupsdLogMessage(CUPSD_LOG_DEBUG2, "select_timeout: JobHistoryUpdate=%ld",
+		  (long)JobHistoryUpdate);
 
  /*
   * Check to see if any of the clients have pending data to be
@@ -1848,54 +1881,6 @@ select_timeout(int fds)			/* I - Number of descriptors returned */
     }
 
  /*
-  * Update the browse list as needed...
-  */
-
-  if (Browsing && BrowseLocalProtocols)
-  {
-#ifdef HAVE_LIBSLP
-    if ((BrowseLocalProtocols & BROWSE_SLP) && (BrowseSLPRefresh < timeout))
-    {
-      timeout = BrowseSLPRefresh;
-      why     = "update SLP browsing";
-    }
-#endif /* HAVE_LIBSLP */
-
-#ifdef HAVE_LDAP
-    if ((BrowseLocalProtocols & BROWSE_LDAP) && (BrowseLDAPRefresh < timeout))
-    {
-      timeout = BrowseLDAPRefresh;
-      why     = "update LDAP browsing";
-    }
-#endif /* HAVE_LDAP */
-
-    if ((BrowseLocalProtocols & BROWSE_CUPS) && NumBrowsers)
-    {
-      for (p = (cupsd_printer_t *)cupsArrayFirst(Printers);
-           p;
-	   p = (cupsd_printer_t *)cupsArrayNext(Printers))
-      {
-	if (p->type & CUPS_PRINTER_REMOTE)
-	{
-	  if ((p->browse_time + BrowseTimeout) < timeout)
-	  {
-	    timeout = p->browse_time + BrowseTimeout;
-	    why     = "browse timeout a printer";
-	  }
-	}
-	else if (p->shared && !(p->type & CUPS_PRINTER_IMPLICIT))
-	{
-	  if (BrowseInterval && (p->browse_time + BrowseInterval) < timeout)
-	  {
-	    timeout = p->browse_time + BrowseInterval;
-	    why     = "send browse update";
-	  }
-	}
-      }
-    }
-  }
-
- /*
   * Write out changes to configuration and state files...
   */
 
@@ -1906,13 +1891,25 @@ select_timeout(int fds)			/* I - Number of descriptors returned */
   }
 
  /*
-  * Check for any active jobs...
+  * Check for any job activity...
   */
+
+  if (JobHistoryUpdate && timeout > JobHistoryUpdate)
+  {
+    timeout = JobHistoryUpdate;
+    why     = "update job history";
+  }
 
   for (job = (cupsd_job_t *)cupsArrayFirst(ActiveJobs);
        job;
        job = (cupsd_job_t *)cupsArrayNext(ActiveJobs))
   {
+    if (job->cancel_time && job->cancel_time < timeout)
+    {
+      timeout = job->cancel_time;
+      why     = "cancel stuck jobs";
+    }
+
     if (job->kill_time && job->kill_time < timeout)
     {
       timeout = job->kill_time;
@@ -1924,7 +1921,8 @@ select_timeout(int fds)			/* I - Number of descriptors returned */
       timeout = job->hold_until;
       why     = "release held jobs";
     }
-    else if (job->state_value == IPP_JOB_PENDING && timeout > (now + 10))
+
+    if (job->state_value == IPP_JOB_PENDING && timeout > (now + 10))
     {
       timeout = now + 10;
       why     = "start pending jobs";
@@ -1958,11 +1956,9 @@ select_timeout(int fds)			/* I - Number of descriptors returned */
     }
 
  /*
-  * Adjust from absolute to relative time.  If p->browse_time above
-  * was 0 then we can end up with a negative value here, so check.
-  * We add 1 second to the timeout since events occur after the
-  * timeout expires, and limit the timeout to 86400 seconds (1 day)
-  * to avoid select() timeout limits present on some operating
+  * Adjust from absolute to relative time.  We add 1 second to the timeout since
+  * events occur after the timeout expires, and limit the timeout to 86400
+  * seconds (1 day) to avoid select() timeout limits present on some operating
   * systems...
   */
 
@@ -2056,8 +2052,7 @@ usage(int status)			/* O - Exit status */
 
   _cupsLangPuts(fp, _("Usage: cupsd [options]"));
   _cupsLangPuts(fp, _("Options:"));
-  _cupsLangPuts(fp, _("  -c config-file          Load alternate configuration "
-                      "file."));
+  _cupsLangPuts(fp, _("  -c cupsd.conf           Set cupsd.conf file to use."));
   _cupsLangPuts(fp, _("  -f                      Run in the foreground."));
   _cupsLangPuts(fp, _("  -F                      Run in the foreground but "
                       "detach from console."));
@@ -2071,5 +2066,5 @@ usage(int status)			/* O - Exit status */
 
 
 /*
- * End of "$Id: main.c 9783 2011-05-18 20:44:16Z mike $".
+ * End of "$Id: main.c 11173 2013-07-23 12:31:34Z msweet $".
  */

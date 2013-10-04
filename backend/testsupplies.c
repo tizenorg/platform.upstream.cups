@@ -1,5 +1,5 @@
 /*
- * "$Id: testsupplies.c 9771 2011-05-12 05:21:56Z mike $"
+ * "$Id: testsupplies.c 11173 2013-07-23 12:31:34Z msweet $"
  *
  *   SNMP supplies test program for CUPS.
  *
@@ -79,5 +79,5 @@ main(int  argc,				/* I - Number of command-line args */
 
 
 /*
- * End of "$Id: testsupplies.c 9771 2011-05-12 05:21:56Z mike $".
+ * End of "$Id: testsupplies.c 11173 2013-07-23 12:31:34Z msweet $".
  */

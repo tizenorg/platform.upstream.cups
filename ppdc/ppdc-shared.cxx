@@ -1,5 +1,5 @@
 //
-// "$Id: ppdc-shared.cxx 8694 2009-06-05 16:47:19Z mike $"
+// "$Id: ppdc-shared.cxx 11173 2013-07-23 12:31:34Z msweet $"
 //
 //   Shared data class for the CUPS PPD Compiler.
 //
@@ -84,5 +84,5 @@ ppdcShared::retain()
 
 
 //
-// End of "$Id: ppdc-shared.cxx 8694 2009-06-05 16:47:19Z mike $".
+// End of "$Id: ppdc-shared.cxx 11173 2013-07-23 12:31:34Z msweet $".
 //

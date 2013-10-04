@@ -1,5 +1,5 @@
 //
-// "$Id: ppdc-array.cxx 8484 2009-04-03 17:35:17Z mike $"
+// "$Id: ppdc-array.cxx 11173 2013-07-23 12:31:34Z msweet $"
 //
 //   Array class for the CUPS PPD Compiler.
 //
@@ -164,5 +164,5 @@ ppdcArray::remove(ppdcShared *d)		// I - Data element
 
 
 //
-// End of "$Id: ppdc-array.cxx 8484 2009-04-03 17:35:17Z mike $".
+// End of "$Id: ppdc-array.cxx 11173 2013-07-23 12:31:34Z msweet $".
 //

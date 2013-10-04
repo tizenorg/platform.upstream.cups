@@ -1,5 +1,5 @@
 //
-// "$Id: ppdc-string.cxx 8698 2009-06-05 20:49:06Z mike $"
+// "$Id: ppdc-string.cxx 11173 2013-07-23 12:31:34Z msweet $"
 //
 //   Shared string class for the CUPS PPD Compiler.
 //
@@ -58,5 +58,5 @@ ppdcString::~ppdcString()
 
 
 //
-// End of "$Id: ppdc-string.cxx 8698 2009-06-05 20:49:06Z mike $".
+// End of "$Id: ppdc-string.cxx 11173 2013-07-23 12:31:34Z msweet $".
 //

@@ -1,5 +1,5 @@
 //
-// "$Id: ppdc-message.cxx 8484 2009-04-03 17:35:17Z mike $"
+// "$Id: ppdc-message.cxx 11173 2013-07-23 12:31:34Z msweet $"
 //
 //   Shared message class for the CUPS PPD Compiler.
 //
@@ -54,5 +54,5 @@ ppdcMessage::~ppdcMessage()
 
 
 //
-// End of "$Id: ppdc-message.cxx 8484 2009-04-03 17:35:17Z mike $".
+// End of "$Id: ppdc-message.cxx 11173 2013-07-23 12:31:34Z msweet $".
 //
