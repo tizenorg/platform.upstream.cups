@@ -16,7 +16,7 @@ BuildRequires:  zlib-devel
 BuildRequires:  libtool
 BuildRequires:  systemd-devel
 %{?systemd_requires}
-%define have_systemd 1
+%define have_systemd 0
 Requires(pre):         /usr/sbin/groupadd
 Url:            http://www.cups.org/
 Summary:        The Common UNIX Printing System
@@ -167,7 +167,7 @@ export CXX=g++
 # so that the new default could be used as is but upstream may accept
 # cups-1.4.3-default-webcontent-path.patch in general but change its default
 # so that with-docdir is explicitly set here to be future proof:
-./configure \
+%configure \
 	--mandir=%{_mandir} \
 	--sysconfdir=%{_sysconfdir} \
 	--libdir=%{_libdir} \
@@ -187,6 +187,7 @@ export CXX=g++
 	--with-python \
 	--with-cachedir=/var/cache/cups \
 	--with-pdftops=/usr/bin/pdftops \
+	--without-xinetd \
 %if 0%{?have_systemd}
 	--with-systemdsystemunitdir=%{_unitdir} \
 %endif
@@ -196,7 +197,7 @@ make %{?_smp_mflags} CXX=g++
 %install
 make BUILDROOT=$RPM_BUILD_ROOT install
 # Use Ghostscript fonts instead of CUPS fonts:
-rm -r $RPM_BUILD_ROOT/usr/share/cups/fonts
+rm -rf $RPM_BUILD_ROOT/usr/share/cups/fonts
 mkdir -p $RPM_BUILD_ROOT/usr/share/ghostscript/fonts
 ln -sf /usr/share/ghostscript/fonts $RPM_BUILD_ROOT/usr/share/cups/
 # Make directory for ssl files:
@@ -242,11 +243,6 @@ rm -rf $RPM_BUILD_ROOT/usr/share/icons
 rm -rf $RPM_BUILD_ROOT/%{_mandir}/es/cat?
 rm -rf $RPM_BUILD_ROOT/%{_mandir}/fr/cat?
 rm -rf $RPM_BUILD_ROOT/%{_mandir}/cat?
-# Norwegian is "nb", "zh" is probablyx "zh_CN"
-mv $RPM_BUILD_ROOT/usr/share/locale/{no,nb}
-mv $RPM_BUILD_ROOT/usr/share/locale/{zh,zh_CN}
-
-rm -rf %{buildroot}/etc/xinetd.d
 
 # Run fdupes:
 %fdupes $RPM_BUILD_ROOT
@@ -286,6 +282,7 @@ rm -rf %{buildroot}/etc/xinetd.d
 # are not overwritten by broken RPMs where mandatory files are missing.
 %defattr(-,root,root)
 %config(noreplace) %attr(640,root,lp) %{_sysconfdir}/cups/cupsd.conf
+%config(noreplace) %attr(640,root,lp) %{_sysconfdir}/cups/cups-files.conf
 %{_sysconfdir}/cups/cupsd.conf.default
 %config(noreplace) %attr(640,root,lp) %{_sysconfdir}/cups/snmp.conf
 %config(noreplace) %attr(755,lp,lp) %{_sysconfdir}/cups/interfaces
@@ -305,8 +302,6 @@ rm -rf %{buildroot}/etc/xinetd.d
 /usr/lib/cups/backend/ipp
 /usr/lib/cups/backend/ipps
 /usr/lib/cups/backend/lpd
-/usr/lib/cups/backend/parallel
-/usr/lib/cups/backend/serial
 /usr/lib/cups/backend/snmp
 /usr/lib/cups/backend/socket
 /usr/lib/cups/backend/usb
@@ -321,26 +316,16 @@ rm -rf %{buildroot}/etc/xinetd.d
 /usr/lib/cups/daemon/cups-driverd
 /usr/lib/cups/daemon/cups-exec
 /usr/lib/cups/daemon/cups-lpd
-/usr/lib/cups/daemon/cups-polld
 %dir /usr/lib/cups/driver
 %dir /usr/lib/cups/filter
-/usr/lib/cups/filter/bannertops
-/usr/lib/cups/filter/commandtoescpx
-/usr/lib/cups/filter/commandtopclx
 /usr/lib/cups/filter/commandtops
 /usr/lib/cups/filter/gziptoany
-/usr/lib/cups/filter/imagetops
-/usr/lib/cups/filter/imagetoraster
-/usr/lib/cups/filter/pdftops
 /usr/lib/cups/filter/pstops
 /usr/lib/cups/filter/rastertodymo
 /usr/lib/cups/filter/rastertoepson
-/usr/lib/cups/filter/rastertoescpx
 /usr/lib/cups/filter/rastertohp
 /usr/lib/cups/filter/rastertolabel
-/usr/lib/cups/filter/rastertopclx
 /usr/lib/cups/filter/rastertopwg
-/usr/lib/cups/filter/texttops
 %dir /usr/lib/cups/monitor
 /usr/lib/cups/monitor/bcp
 /usr/lib/cups/monitor/tbcp
@@ -355,6 +340,7 @@ rm -rf %{buildroot}/etc/xinetd.d
 %doc %{_mandir}/man1/cupstestppd.1.gz
 %doc %{_mandir}/man5/classes.conf.5.gz
 %doc %{_mandir}/man5/client.conf.5.gz
+%doc %{_mandir}/man5/cups-files.conf.5.gz
 %doc %{_mandir}/man5/cups-snmp.conf.5.gz
 %doc %{_mandir}/man5/cupsd.conf.5.gz
 %doc %{_mandir}/man5/mailto.conf.5.gz
@@ -368,7 +354,7 @@ rm -rf %{buildroot}/etc/xinetd.d
 %doc %{_mandir}/man8/cups-deviced.8.gz
 %doc %{_mandir}/man8/cups-driverd.8.gz
 %doc %{_mandir}/man8/cups-lpd.8.gz
-%doc %{_mandir}/man8/cups-polld.8.gz
+%doc %{_mandir}/man8/cups-snmp.8.gz
 %doc %{_mandir}/man8/cupsaddsmb.8.gz
 %doc %{_mandir}/man8/cupsctl.8.gz
 %doc %{_mandir}/man8/cupsd.8.gz
@@ -441,7 +427,6 @@ rm -rf %{buildroot}/etc/xinetd.d
 %{_libdir}/libcups.so
 %{_libdir}/libcupsimage.so
 %{_libdir}/libcupscgi.so
-%{_libdir}/libcupsdriver.so
 %{_libdir}/libcupsmime.so
 %{_libdir}/libcupsppdc.so
 %{_datadir}/cups/ppdc/
@@ -472,7 +457,6 @@ rm -rf %{buildroot}/etc/xinetd.d
 %{_bindir}/cups-config
 %{_libdir}/libcups.so.*
 %{_libdir}/libcupscgi.so.*
-%{_libdir}/libcupsdriver.so.*
 %{_libdir}/libcupsimage.so.*
 %{_libdir}/libcupsmime.so.*
 %{_libdir}/libcupsppdc.so.*
