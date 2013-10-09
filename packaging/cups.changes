@@ -1,3 +1,6 @@
+* Wed Oct 09 2013 Łukasz Stelmach <l.stelmach@samsung.com> upstream/1.6.4@fe0f7d7
+- Adapt packaging/cups.spec for 1.6.4
+
 * Tue Jul 16 2013 Michael I Doherty <michael.i.doherty@intel.com> accepted/tizen/20130710.220945@d56b191
 - Only use systemd socket activation, do not enable service itself
 
