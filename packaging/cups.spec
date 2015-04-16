@@ -1,6 +1,7 @@
 Name:           cups
 #BuildRequires:  avahi-compat-mDNSResponder-devel
 BuildRequires:  pkgconfig(dbus-1)
+BuildRequires:  dbus
 BuildRequires:  fdupes
 BuildRequires:  gcc-c++
 BuildRequires:  libjpeg8-devel
