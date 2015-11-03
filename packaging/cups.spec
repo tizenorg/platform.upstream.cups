@@ -157,6 +157,9 @@ autoconf
 export CXXFLAGS="$CXXFLAGS $RPM_OPT_FLAGS -O2 -fstack-protector"
 export CFLAGS="$RPM_OPT_FLAGS -fstack-protector -DLDAP_DEPRECATED"
 export CXX=g++
+
+%define tizen_icon_path /usr/share/icons
+
 # As long as cups-1.4.3-default-webcontent-path.patch is applied
 # configure --with-docdir=... would be no longer needed
 # because cups-1.4.3-default-webcontent-path.patch changes the
@@ -191,6 +194,7 @@ export CXX=g++
 %if 0%{?have_systemd}
 	--with-systemdsystemunitdir=%{_unitdir} \
 %endif
+	--with-icondir=%{tizen_icon_path} \
 	--prefix=/
 make %{?_smp_mflags} CXX=g++
 
@@ -237,7 +241,7 @@ done
 rm -f $RPM_BUILD_ROOT/usr/share/applications/cups.desktop
 %tizen_update_desktop_file -i cups PrintingUtility 2>/dev/null
 mkdir $RPM_BUILD_ROOT/usr/share/pixmaps
-install -m 644 $RPM_BUILD_ROOT/usr/share/icons/hicolor/64x64/apps/cups.png $RPM_BUILD_ROOT/usr/share/pixmaps
+install -m 644 $RPM_BUILD_ROOT%{tizen_icon_path}/hicolor/64x64/apps/cups.png $RPM_BUILD_ROOT/usr/share/pixmaps
 rm -rf $RPM_BUILD_ROOT/usr/share/icons
 # Remove unpackaged files:
 rm -rf $RPM_BUILD_ROOT/%{_mandir}/es/cat?
