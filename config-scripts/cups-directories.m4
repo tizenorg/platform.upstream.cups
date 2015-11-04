@@ -314,7 +314,8 @@ AC_SUBST(CUPS_DATADIR)
 # Icon directory
 AC_ARG_WITH(icondir, [  --with-icondir          set path for application icons],icondir="$withval",icondir="")
 
-if test "x$icondir" = x -a -d /usr/share/icons; then
+# if test "x$icondir" = x -a -d /usr/share/icons; then
+if test "x$icondir" = x ; then
 	ICONDIR="/usr/share/icons"
 else
 	ICONDIR="$icondir"
