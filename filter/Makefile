@@ -1,5 +1,5 @@
 #
-# "$Id: Makefile 11173 2013-07-23 12:31:34Z msweet $"
+# "$Id: Makefile 12568 2015-03-25 13:49:23Z msweet $"
 #
 #   Filter makefile for CUPS.
 #
@@ -110,6 +110,7 @@ install-exec:
 		$(INSTALL_DIR) $(SYMROOT); \
 		for file in $(FILTERS); do \
 			cp $$file $(SYMROOT); \
+			dsymutil $(SYMROOT)/$$file; \
 		done \
 	fi
 
@@ -139,6 +140,7 @@ install-libs: $(INSTALLSTATIC)
 	if test "x$(SYMROOT)" != "x"; then \
 		$(INSTALL_DIR) $(SYMROOT); \
 		cp $(LIBCUPSIMAGE) $(SYMROOT); \
+		dsymutil $(SYMROOT)/$(LIBCUPSIMAGE); \
 	fi
 
 installstatic:
@@ -365,6 +367,12 @@ rastertopwg:	rastertopwg.o ../cups/$(LIBCUPS) $(LIBCUPSIMAGE)
 	echo Linking $@...
 	$(CC) $(LDFLAGS) -o $@ rastertopwg.o $(LINKCUPSIMAGE) $(IMGLIBS) $(LIBS)
 
+rastertopwg-static:	rastertopwg.o ../cups/$(LIBCUPSSTATIC) libcupsimage.a
+	echo Linking $@...
+	$(CC) $(LDFLAGS) -o $@ rastertopwg.o libcupsimage.a \
+		../cups/$(LIBCUPSSTATIC) $(IMGLIBS) $(DSOLIBS) $(COMMONLIBS) \
+		$(SSLLIBS) $(DNSSDLIBS) $(LIBGSSAPI)
+
 
 #
 # testraster
@@ -396,5 +404,5 @@ include Dependencies
 
 
 #
-# End of "$Id: Makefile 11173 2013-07-23 12:31:34Z msweet $".
+# End of "$Id: Makefile 12568 2015-03-25 13:49:23Z msweet $".
 #

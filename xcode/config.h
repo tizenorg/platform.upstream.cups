@@ -1,28 +1,29 @@
-/* config.h.  Generated from config.h.in by configure.  */
 /*
- * "$Id: config.h 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: config.h 12998 2015-12-02 15:09:04Z msweet $"
  *
- *   Configuration file for CUPS.
+ * Configuration file for CUPS and Xcode.
  *
- *   Copyright 2007-2013 by Apple Inc.
- *   Copyright 1997-2007 by Easy Software Products.
+ * Copyright 2007-2015 by Apple Inc.
+ * Copyright 1997-2007 by Easy Software Products.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 #ifndef _CUPS_CONFIG_H_
 #define _CUPS_CONFIG_H_
 
+#include <AvailabilityMacros.h>
+
 /*
  * Version of software...
  */
 
-#define CUPS_SVERSION "CUPS v1.6.3"
-#define CUPS_MINIMAL "CUPS/1.6.3"
+#define CUPS_SVERSION "CUPS v2.1.2"
+#define CUPS_MINIMAL "CUPS/2.1.2"
 
 
 /*
@@ -33,6 +34,7 @@
 #define CUPS_DEFAULT_GROUP "_lp"
 #define CUPS_DEFAULT_SYSTEM_GROUPS "admin"
 #define CUPS_DEFAULT_PRINTOPERATOR_AUTH "@AUTHKEY(system.print.operator) @admin @lpadmin"
+#define CUPS_DEFAULT_SYSTEM_AUTHKEY "system.print.admin"
 
 
 /*
@@ -132,13 +134,18 @@
 
 
 /*
- * Do we have various image libraries?
+ * Do we have posix_spawn?
  */
 
-/* #undef HAVE_LIBPNG */
+#define HAVE_POSIX_SPAWN 1
+
+
+/*
+ * Do we have ZLIB?
+ */
+
 #define HAVE_LIBZ 1
-/* #undef HAVE_LIBJPEG */
-/* #undef HAVE_LIBTIFF */
+#define HAVE_INFLATECOPY 1
 
 
 /*
@@ -169,10 +176,10 @@
 
 
 /*
- * Do we have <scsi/sg.h>?
+ * Use <stdint.h>?
  */
 
-/* #undef HAVE_SCSI_SG_H */
+#define HAVE_STDINT_H 1
 
 
 /*
@@ -241,6 +248,20 @@
 
 
 /*
+ * Do we have the ASL functions?
+ */
+
+#define HAVE_ASL_H
+
+
+/*
+ * Do we have the systemd journal functions?
+ */
+
+/*#undef HAVE_SYSTEMD_SD_JOURNAL_H*/
+
+
+/*
  * Do we have the (v)snprintf() functions?
  */
 
@@ -292,15 +313,21 @@
 
 #define HAVE_CDSASSL 1
 /* #undef HAVE_GNUTLS */
-/* #undef HAVE_LIBSSL */
 #define HAVE_SSL 1
 
 
 /*
- * Do we have the SSL_set_tlsext_host_name function?
+ * Do we have the gnutls_transport_set_pull_timeout_function function?
  */
 
-/* #undef HAVE_SSL_SET_TLSEXT_HOST_NAME */
+/* #undef HAVE_GNUTLS_TRANSPORT_SET_PULL_TIMEOUT_FUNCTION */
+
+
+/*
+ * Do we have the gnutls_priority_set_direct function?
+ */
+
+/* #undef HAVE_GNUTLS_PRIORITY_SET_DIRECT */
 
 
 /*
@@ -308,42 +335,14 @@
  */
 
 #define HAVE_AUTHORIZATION_H 1
-#define HAVE_SECBASEPRIV_H 1
+/* #undef HAVE_SECBASEPRIV_H */
 #define HAVE_SECCERTIFICATE_H 1
-#define HAVE_SECIDENTITYSEARCHPRIV_H 1
+/* #undef HAVE_SECIDENTITYSEARCHPRIV_H */
 #define HAVE_SECITEM_H 1
-#define HAVE_SECITEMPRIV_H 1
+/* #undef HAVE_SECITEMPRIV_H */
 #define HAVE_SECPOLICY_H 1
-#define HAVE_SECPOLICYPRIV_H 1
-#define HAVE_SECURETRANSPORTPRIV_H 1
-
-
-/*
- * Do we have the SecCertificateCopyData function?
- */
-
-#define HAVE_SECCERTIFICATECOPYDATA 1
-
-
-/*
- * Do we have the SecIdentitySearchCreateWithPolicy function?
- */
-
-#define HAVE_SECIDENTITYSEARCHCREATEWITHPOLICY 1
-
-
-/*
- * Do we have the SecPolicyCreateSSL function?
- */
-
-#define HAVE_SECPOLICYCREATESSL 1
-
-
-/*
- * Do we have the SecPolicyCreateSSL function?
- */
-
-#define HAVE_SECPOLICYCREATESSL 1
+/* #undef HAVE_SECPOLICYPRIV_H */
+/* #undef HAVE_SECURETRANSPORTPRIV_H */
 
 
 /*
@@ -351,6 +350,29 @@
  */
 
 #define HAVE_CSSMERRORSTRING 1
+
+
+/*
+ * Do we have the SecGenerateSelfSignedCertificate function?
+ */
+
+/* #undef HAVE_SECGENERATESELFSIGNEDCERTIFICATE */
+
+
+/*
+ * Do we have the SecKeychainOpen function?
+ */
+
+#define HAVE_SECKEYCHAINOPEN 1
+
+
+/*
+ * Do we have (a working) SSLSetEnabledCiphers function?
+ */
+
+#ifdef AVAILABLE_MAC_OS_X_VERSION_10_11_AND_LATER
+#  define HAVE_SSLSETENABLEDCIPHERS 1
+#endif /* AVAILABLE_MAC_OS_X_VERSION_10_11_AND_LATER */
 
 
 /*
@@ -459,13 +481,6 @@
 
 
 /*
- * Do we have the AIX usersec.h header file?
- */
-
-/* #undef HAVE_USERSEC_H */
-
-
-/*
  * Do we have pthread support?
  */
 
@@ -478,6 +493,7 @@
 
 #define HAVE_LAUNCH_H 1
 #define HAVE_LAUNCHD 1
+#define HAVE_LAUNCH_ACTIVATE_SOCKET 1
 
 
 /*
@@ -517,8 +533,8 @@
  */
 
 #define HAVE_COREFOUNDATION_H 1
-#define HAVE_CFPRIV_H 1
-#define HAVE_CFBUNDLEPRIV_H 1
+/* #undef HAVE_CFPRIV_H */
+/* #undef HAVE_CFBUNDLEPRIV_H */
 
 
 /*
@@ -540,7 +556,7 @@
  */
 
 #define HAVE_MEMBERSHIP_H 1
-#define HAVE_MEMBERSHIPPRIV_H 1
+/* #undef HAVE_MEMBERSHIPPRIV_H */
 #define HAVE_MBR_UID_TO_UUID 1
 
 
@@ -550,13 +566,6 @@
 
 #define HAVE_NOTIFY_H 1
 #define HAVE_NOTIFY_POST 1
-
-
-/*
- * Do we have Darwin's IOKit private headers?
- */
-
-#define HAVE_IOKIT_PWR_MGT_IOPMLIBPRIVATE_H 1
 
 
 /*
@@ -574,13 +583,10 @@
 #define HAVE_GSS_ACQUIRE_CRED_EX_F 1
 #define HAVE_GSS_C_NT_HOSTBASED_SERVICE 1
 #define HAVE_GSS_GSSAPI_H 1
-#define HAVE_GSS_GSSAPI_SPI_H 1
+/* #undef HAVE_GSS_GSSAPI_SPI_H */
 #define HAVE_GSSAPI 1
-/* #undef HAVE_GSSAPI_GENERIC_H */
 /* #undef HAVE_GSSAPI_GSSAPI_H */
 /* #undef HAVE_GSSAPI_H */
-#define HAVE_GSSAPI_KRB5_H 1
-#define HAVE_KRB5_H 1
 
 
 /*
@@ -658,13 +664,6 @@
 
 
 /*
- * Do we have vproc_transaction_begin/end?
- */
-
-#define HAVE_VPROC_TRANSACTION_BEGIN 1
-
-
-/*
  * Do we have libusb?
  */
 
@@ -709,7 +708,7 @@
  */
 
 #define HAVE_XPC 1
-#define HAVE_XPC_PRIVATE_H 1
+/* #undef HAVE_XPC_PRIVATE_H */
 
 
 /*
@@ -739,5 +738,5 @@ static __inline int _cups_abs(int i) { return (i < 0 ? -i : i); }
 #endif /* !_CUPS_CONFIG_H_ */
 
 /*
- * End of "$Id: config.h 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: config.h 12998 2015-12-02 15:09:04Z msweet $".
  */

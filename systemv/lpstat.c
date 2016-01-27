@@ -1,30 +1,16 @@
 /*
- * "$Id: lpstat.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: lpstat.c 12124 2014-08-28 15:37:22Z msweet $"
  *
- *   "lpstat" command for CUPS.
+ * "lpstat" command for CUPS.
  *
- *   Copyright 2007-2013 by Apple Inc.
- *   Copyright 1997-2006 by Easy Software Products.
+ * Copyright 2007-2014 by Apple Inc.
+ * Copyright 1997-2006 by Easy Software Products.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
- *
- * Contents:
- *
- *   main()           - Parse options and show status information.
- *   check_dest()     - Verify that the named destination(s) exists.
- *   match_list()     - Match a name from a list of comma or space-separated
- *                      names.
- *   show_accepting() - Show acceptance status.
- *   show_classes()   - Show printer classes.
- *   show_default()   - Show default destination.
- *   show_devices()   - Show printer devices.
- *   show_jobs()      - Show active print jobs.
- *   show_printers()  - Show printers.
- *   show_scheduler() - Show scheduler status.
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 /*
@@ -109,6 +95,7 @@ main(int  argc,				/* I - Number of command-line arguments */
 	      _cupsLangPuts(stdout, cupsServer());
 	    else
 	      _cupsLangPrintf(stdout, "%s:%d", cupsServer(), ippPort());
+	    op = 'H';
             break;
 
         case 'P' : /* Show paper types */
@@ -201,8 +188,8 @@ main(int  argc,				/* I - Number of command-line arguments */
 		num_dests = cupsGetDests(&dests);
 
 		if (num_dests == 0 &&
-		    (cupsLastError() == IPP_BAD_REQUEST ||
-		     cupsLastError() == IPP_VERSION_NOT_SUPPORTED))
+		    (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+		     cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED))
 		{
 		  _cupsLangPrintf(stderr,
 				  _("%s: Error - add '/version=1.1' to server "
@@ -214,38 +201,6 @@ main(int  argc,				/* I - Number of command-line arguments */
 	      status |= show_accepting(NULL, num_dests, dests);
 	    }
 	    break;
-
-#ifdef __sgi
-        case 'b' : /* Show both the local and remote status */
-	    op = 'b';
-
-	    if (argv[i][2])
-	    {
-	     /*
-	      * The local and remote status are separated by a blank line;
-	      * since all CUPS jobs are networked, we only output the
-	      * second list for now...  In the future, we might further
-	      * emulate this by listing the remote server's queue, but
-	      * for now this is enough to make the SGI printstatus program
-	      * happy...
-	      */
-
-              check_dest(argv[0], argv[i] + 2, &num_dests, &dests);
-
-	      puts("");
-	      status |= show_jobs(argv[i] + 2, NULL, 3, ranking, which);
-	    }
-	    else
-	    {
-	      _cupsLangPrintf(stderr,
-	                      _("%s: Error - expected destination after "
-			        "\"-b\" option."),
-			      argv[0]);
-
-	      return (1);
-	    }
-	    break;
-#endif /* __sgi */
 
         case 'c' : /* Show classes and members */
 	    op = 'c';
@@ -279,8 +234,8 @@ main(int  argc,				/* I - Number of command-line arguments */
 	      num_dests = dests ? 1 : 0;
 
 	      if (num_dests == 0 &&
-	          (cupsLastError() == IPP_BAD_REQUEST ||
-		   cupsLastError() == IPP_VERSION_NOT_SUPPORTED))
+	          (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+		   cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED))
 	      {
 		_cupsLangPrintf(stderr,
 				_("%s: Error - add '/version=1.1' to server "
@@ -319,18 +274,7 @@ main(int  argc,				/* I - Number of command-line arguments */
 	    break;
 
         case 'l' : /* Long status or long job status */
-#ifdef __sgi
-	    op = 'l';
-
-	    if (argv[i][2])
-	    {
-              check_dest(argv[0], argv[i] + 2, &num_dests, &dests);
-
-	      status |= show_jobs(argv[i] + 2, NULL, 3, ranking, which);
-	    }
-	    else
-#endif /* __sgi */
-	      long_status = 2;
+	    long_status = 2;
 	    break;
 
         case 'o' : /* Show jobs by destination */
@@ -381,8 +325,8 @@ main(int  argc,				/* I - Number of command-line arguments */
 		num_dests = cupsGetDests(&dests);
 
 		if (num_dests == 0 &&
-		    (cupsLastError() == IPP_BAD_REQUEST ||
-		     cupsLastError() == IPP_VERSION_NOT_SUPPORTED))
+		    (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+		     cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED))
 		{
 		  _cupsLangPrintf(stderr,
 				  _("%s: Error - add '/version=1.1' to server "
@@ -410,8 +354,8 @@ main(int  argc,				/* I - Number of command-line arguments */
 	      num_dests = cupsGetDests(&dests);
 
 	      if (num_dests == 0 &&
-		  (cupsLastError() == IPP_BAD_REQUEST ||
-		   cupsLastError() == IPP_VERSION_NOT_SUPPORTED))
+		  (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+		   cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED))
 	      {
 		_cupsLangPrintf(stderr,
 				_("%s: Error - add '/version=1.1' to server "
@@ -434,8 +378,8 @@ main(int  argc,				/* I - Number of command-line arguments */
 	      num_dests = cupsGetDests(&dests);
 
 	      if (num_dests == 0 &&
-		  (cupsLastError() == IPP_BAD_REQUEST ||
-		   cupsLastError() == IPP_VERSION_NOT_SUPPORTED))
+		  (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+		   cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED))
 	      {
 		_cupsLangPrintf(stderr,
 				_("%s: Error - add '/version=1.1' to server "
@@ -493,8 +437,8 @@ main(int  argc,				/* I - Number of command-line arguments */
 		num_dests = cupsGetDests(&dests);
 
 		if (num_dests == 0 &&
-		    (cupsLastError() == IPP_BAD_REQUEST ||
-		     cupsLastError() == IPP_VERSION_NOT_SUPPORTED))
+		    (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+		     cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED))
 		{
 		  _cupsLangPrintf(stderr,
 				  _("%s: Error - add '/version=1.1' to server "
@@ -560,8 +504,8 @@ check_dest(const char  *command,	/* I  - Command name */
 
       if ((*dests = cupsGetNamedDest(CUPS_HTTP_DEFAULT, printer, pptr)) == NULL)
       {
-	if (cupsLastError() == IPP_BAD_REQUEST ||
-	    cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+	if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+	    cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
 	  _cupsLangPrintf(stderr,
 			  _("%s: Error - add '/version=1.1' to server name."),
 			  command);
@@ -621,8 +565,8 @@ check_dest(const char  *command,	/* I  - Command name */
 
     if (!cupsGetDest(printer, NULL, *num_dests, *dests))
     {
-      if (cupsLastError() == IPP_BAD_REQUEST ||
-          cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+      if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+          cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
 	_cupsLangPrintf(stderr,
 	                _("%s: Error - add '/version=1.1' to server name."),
 			command);
@@ -705,7 +649,6 @@ show_accepting(const char  *printers,	/* I - Destinations */
 		*message;		/* Printer device URI */
   int		accepting;		/* Accepting requests? */
   time_t	ptime;			/* Printer state time */
-  struct tm	*pdate;			/* Printer state date & time */
   char		printer_state_time[255];/* Printer state time */
   static const char *pattrs[] =		/* Attributes we need for printers... */
 		{
@@ -746,8 +689,8 @@ show_accepting(const char  *printers,	/* I - Destinations */
 
   response = cupsDoRequest(CUPS_HTTP_DEFAULT, request, "/");
 
-  if (cupsLastError() == IPP_BAD_REQUEST ||
-      cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+  if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+      cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
   {
     _cupsLangPrintf(stderr,
 		    _("%s: Error - add '/version=1.1' to server name."),
@@ -755,7 +698,7 @@ show_accepting(const char  *printers,	/* I - Destinations */
     ippDelete(response);
     return (1);
   }
-  else if (cupsLastError() > IPP_OK_CONFLICT)
+  else if (cupsLastError() > IPP_STATUS_OK_CONFLICTING)
   {
     _cupsLangPrintf(stderr, "lpstat: %s", cupsLastErrorString());
     ippDelete(response);
@@ -828,8 +771,7 @@ show_accepting(const char  *printers,	/* I - Destinations */
 
       if (match_list(printers, printer))
       {
-        pdate = localtime(&ptime);
-        strftime(printer_state_time, sizeof(printer_state_time), "%c", pdate);
+        _cupsStrDate(printer_state_time, sizeof(printer_state_time), ptime);
 
         if (accepting)
 	  _cupsLangPrintf(stdout, _("%s accepting requests since %s"),
@@ -931,8 +873,8 @@ show_classes(const char *dests)		/* I - Destinations */
 
   response = cupsDoRequest(CUPS_HTTP_DEFAULT, request, "/");
 
-  if (cupsLastError() == IPP_BAD_REQUEST ||
-      cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+  if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+      cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
   {
     _cupsLangPrintf(stderr,
 		    _("%s: Error - add '/version=1.1' to server name."),
@@ -940,7 +882,7 @@ show_classes(const char *dests)		/* I - Destinations */
     ippDelete(response);
     return (1);
   }
-  else if (cupsLastError() > IPP_OK_CONFLICT)
+  else if (cupsLastError() > IPP_STATUS_OK_CONFLICTING)
   {
     _cupsLangPrintf(stderr, "lpstat: %s", cupsLastErrorString());
     ippDelete(response);
@@ -1192,8 +1134,8 @@ show_devices(const char  *printers,	/* I - Destinations */
 
   response = cupsDoRequest(CUPS_HTTP_DEFAULT, request, "/");
 
-  if (cupsLastError() == IPP_BAD_REQUEST ||
-      cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+  if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+      cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
   {
     _cupsLangPrintf(stderr,
 		    _("%s: Error - add '/version=1.1' to server name."),
@@ -1201,7 +1143,7 @@ show_devices(const char  *printers,	/* I - Destinations */
     ippDelete(response);
     return (1);
   }
-  else if (cupsLastError() > IPP_OK_CONFLICT)
+  else if (cupsLastError() > IPP_STATUS_OK_CONFLICTING)
   {
     _cupsLangPrintf(stderr, "lpstat: %s", cupsLastErrorString());
     ippDelete(response);
@@ -1272,52 +1214,6 @@ show_devices(const char  *printers,	/* I - Destinations */
 
       if (match_list(printers, printer))
       {
-#ifdef __osf__ /* Compaq/Digital like to do it their own way... */
-        char	scheme[HTTP_MAX_URI],	/* Components of printer URI */
-		username[HTTP_MAX_URI],
-		hostname[HTTP_MAX_URI],
-		resource[HTTP_MAX_URI];
-	int	port;
-
-
-        if (device == NULL)
-	{
-	  httpSeparateURI(HTTP_URI_CODING_ALL, uri, scheme, sizeof(scheme),
-	                  username, sizeof(username), hostname,
-			  sizeof(hostname), &port, resource, sizeof(resource));
-          _cupsLangPrintf(stdout,
-	                  _("Output for printer %s is sent to remote "
-			    "printer %s on %s"),
-	        	  printer, strrchr(resource, '/') + 1, hostname);
-        }
-        else if (!strncmp(device, "file:", 5))
-          _cupsLangPrintf(stdout,
-	                  _("Output for printer %s is sent to %s"),
-			  printer, device + 5);
-        else
-          _cupsLangPrintf(stdout,
-	                  _("Output for printer %s is sent to %s"),
-			  printer, device);
-
-        for (i = 0; i < num_dests; i ++)
-	  if (!_cups_strcasecmp(printer, dests[i].name) && dests[i].instance)
-	  {
-            if (device == NULL)
-              _cupsLangPrintf(stdout,
-	                      _("Output for printer %s/%s is sent to "
-			        "remote printer %s on %s"),
-	        	      printer, dests[i].instance,
-			      strrchr(resource, '/') + 1, hostname);
-            else if (!strncmp(device, "file:", 5))
-              _cupsLangPrintf(stdout,
-	                      _("Output for printer %s/%s is sent to %s"),
-			      printer, dests[i].instance, device + 5);
-            else
-              _cupsLangPrintf(stdout,
-	                      _("Output for printer %s/%s is sent to %s"),
-			      printer, dests[i].instance, device);
-	  }
-#else
         if (device == NULL)
           _cupsLangPrintf(stdout, _("device for %s: %s"),
 	                  printer, uri);
@@ -1329,6 +1225,7 @@ show_devices(const char  *printers,	/* I - Destinations */
 	                  printer, device);
 
         for (i = 0; i < num_dests; i ++)
+        {
 	  if (!_cups_strcasecmp(printer, dests[i].name) && dests[i].instance)
 	  {
             if (device == NULL)
@@ -1341,7 +1238,7 @@ show_devices(const char  *printers,	/* I - Destinations */
               _cupsLangPrintf(stdout, _("device for %s/%s: %s"),
 	                      printer, dests[i].instance, device);
 	  }
-#endif /* __osf__ */
+	}
       }
 
       if (attr == NULL)
@@ -1373,13 +1270,12 @@ show_jobs(const char *dests,		/* I - Destinations */
 		*reasons;		/* Job state reasons attribute */
   const char	*dest,			/* Pointer into job-printer-uri */
 		*username,		/* Pointer to job-originating-user-name */
-		*title,			/* Pointer to job-name */
-		*message;		/* Pointer to job-printer-state-message */
+		*message,		/* Pointer to job-printer-state-message */
+		*time_at;		/* time-at-xxx attribute name to use */
   int		rank,			/* Rank in queue */
 		jobid,			/* job-id */
 		size;			/* job-k-octets */
   time_t	jobtime;		/* time-at-creation */
-  struct tm	*jobdate;		/* Date & time */
   char		temp[255],		/* Temporary buffer */
 		date[255];		/* Date buffer */
   static const char *jattrs[] =		/* Attributes we need for jobs... */
@@ -1391,7 +1287,8 @@ show_jobs(const char *dests,		/* I - Destinations */
 		  "job-printer-state-message",
 		  "job-printer-uri",
 		  "job-state-reasons",
-		  "time-at-creation"
+		  "time-at-creation",
+		  "time-at-completed"
 		};
 
 
@@ -1435,8 +1332,8 @@ show_jobs(const char *dests,		/* I - Destinations */
 
   response = cupsDoRequest(CUPS_HTTP_DEFAULT, request, "/");
 
-  if (cupsLastError() == IPP_BAD_REQUEST ||
-      cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+  if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+      cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
   {
     _cupsLangPrintf(stderr,
 		    _("%s: Error - add '/version=1.1' to server name."),
@@ -1444,7 +1341,7 @@ show_jobs(const char *dests,		/* I - Destinations */
     ippDelete(response);
     return (1);
   }
-  else if (cupsLastError() > IPP_OK_CONFLICT)
+  else if (cupsLastError() > IPP_STATUS_OK_CONFLICTING)
   {
     _cupsLangPrintf(stderr, "lpstat: %s", cupsLastErrorString());
     ippDelete(response);
@@ -1456,6 +1353,13 @@ show_jobs(const char *dests,		/* I - Destinations */
    /*
     * Loop through the job list and display them...
     */
+
+    if (!strcmp(which, "aborted") ||
+        !strcmp(which, "canceled") ||
+        !strcmp(which, "completed"))
+      time_at = "time-at-completed";
+    else
+      time_at = "time-at-creation";
 
     rank = -1;
 
@@ -1480,7 +1384,6 @@ show_jobs(const char *dests,		/* I - Destinations */
       username = NULL;
       dest     = NULL;
       jobtime  = 0;
-      title    = "no title";
       message  = NULL;
       reasons  = NULL;
 
@@ -1492,8 +1395,7 @@ show_jobs(const char *dests,		/* I - Destinations */
         else if (!strcmp(attr->name, "job-k-octets") &&
 		 attr->value_tag == IPP_TAG_INTEGER)
 	  size = attr->values[0].integer;
-        else if (!strcmp(attr->name, "time-at-creation") &&
-		 attr->value_tag == IPP_TAG_INTEGER)
+        else if (!strcmp(attr->name, time_at) && attr->value_tag == IPP_TAG_INTEGER)
 	  jobtime = attr->values[0].integer;
         else if (!strcmp(attr->name, "job-printer-state-message") &&
 	         attr->value_tag == IPP_TAG_TEXT)
@@ -1507,9 +1409,6 @@ show_jobs(const char *dests,		/* I - Destinations */
         else if (!strcmp(attr->name, "job-originating-user-name") &&
 	         attr->value_tag == IPP_TAG_NAME)
 	  username = attr->values[0].string.text;
-        else if (!strcmp(attr->name, "job-name") &&
-	         attr->value_tag == IPP_TAG_NAME)
-	  title = attr->values[0].string.text;
         else if (!strcmp(attr->name, "job-state-reasons") &&
 	         attr->value_tag == IPP_TAG_KEYWORD)
 	  reasons = attr;
@@ -1537,62 +1436,42 @@ show_jobs(const char *dests,		/* I - Destinations */
 
       if (match_list(dests, dest) && match_list(users, username))
       {
-        jobdate = localtime(&jobtime);
         snprintf(temp, sizeof(temp), "%s-%d", dest, jobid);
 
-        if (long_status == 3)
-	{
-	 /*
-	  * Show the consolidated output format for the SGI tools...
-	  */
+	_cupsStrDate(date, sizeof(date), jobtime);
 
-	  if (!strftime(date, sizeof(date), "%b %d %H:%M", jobdate))
-	    strcpy(date, "Unknown");
-
-	  _cupsLangPrintf(stdout, "%s;%s;%d;%s;%s",
-	                  temp, username ? username : "unknown",
-	        	  size, title ? title : "unknown", date);
-	}
+	if (ranking)
+	  _cupsLangPrintf(stdout, "%3d %-21s %-13s %8.0f %s",
+			  rank, temp, username ? username : "unknown",
+			  1024.0 * size, date);
 	else
+	  _cupsLangPrintf(stdout, "%-23s %-13s %8.0f   %s",
+			  temp, username ? username : "unknown",
+			  1024.0 * size, date);
+	if (long_status)
 	{
-	  if (!strftime(date, sizeof(date), "%c", jobdate))
-	    strcpy(date, "Unknown");
+	  if (message)
+	    _cupsLangPrintf(stdout, _("\tStatus: %s"), message);
 
-          if (ranking)
-	    _cupsLangPrintf(stdout, "%3d %-21s %-13s %8.0f %s",
-	                    rank, temp, username ? username : "unknown",
-			    1024.0 * size, date);
-          else
-	    _cupsLangPrintf(stdout, "%-23s %-13s %8.0f   %s",
-	                    temp, username ? username : "unknown",
-			    1024.0 * size, date);
-          if (long_status)
-          {
-	    if (message)
-	      _cupsLangPrintf(stdout, _("\tStatus: %s"), message);
+	  if (reasons)
+	  {
+	    char	alerts[1024],	/* Alerts string */
+		      *aptr;		/* Pointer into alerts string */
 
-	    if (reasons)
+	    for (i = 0, aptr = alerts; i < reasons->num_values; i ++)
 	    {
-	      char	alerts[1024],	/* Alerts string */
-			*aptr;		/* Pointer into alerts string */
+	      if (i)
+		snprintf(aptr, sizeof(alerts) - (size_t)(aptr - alerts), " %s", reasons->values[i].string.text);
+	      else
+		strlcpy(alerts, reasons->values[i].string.text, sizeof(alerts));
 
-	      for (i = 0, aptr = alerts; i < reasons->num_values; i ++)
-	      {
-	        if (i)
-		  snprintf(aptr, sizeof(alerts) - (aptr - alerts), " %s",
-			   reasons->values[i].string.text);
-                else
-		  strlcpy(alerts, reasons->values[i].string.text,
-		          sizeof(alerts));
-
-		aptr += strlen(aptr);
-	      }
-
-	      _cupsLangPrintf(stdout, _("\tAlerts: %s"), alerts);
+	      aptr += strlen(aptr);
 	    }
 
-	    _cupsLangPrintf(stdout, _("\tqueued for %s"), dest);
+	    _cupsLangPrintf(stdout, _("\tAlerts: %s"), alerts);
 	  }
+
+	  _cupsLangPrintf(stdout, _("\tqueued for %s"), dest);
 	}
       }
 
@@ -1635,7 +1514,6 @@ show_printers(const char  *printers,	/* I - Destinations */
   ipp_pstate_t	pstate;			/* Printer state */
   cups_ptype_t	ptype;			/* Printer type */
   time_t	ptime;			/* Printer state time */
-  struct tm	*pdate;			/* Printer state date & time */
   int		jobid;			/* Job ID of current job */
   char		printer_uri[HTTP_MAX_URI],
 					/* Printer URI */
@@ -1694,8 +1572,8 @@ show_printers(const char  *printers,	/* I - Destinations */
 
   response = cupsDoRequest(CUPS_HTTP_DEFAULT, request, "/");
 
-  if (cupsLastError() == IPP_BAD_REQUEST ||
-      cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+  if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+      cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
   {
     _cupsLangPrintf(stderr,
 		    _("%s: Error - add '/version=1.1' to server name."),
@@ -1703,7 +1581,7 @@ show_printers(const char  *printers,	/* I - Destinations */
     ippDelete(response);
     return (1);
   }
-  else if (cupsLastError() > IPP_OK_CONFLICT)
+  else if (cupsLastError() > IPP_STATUS_OK_CONFLICTING)
   {
     _cupsLangPrintf(stderr, "lpstat: %s", cupsLastErrorString());
     ippDelete(response);
@@ -1865,7 +1743,7 @@ show_printers(const char  *printers,	/* I - Destinations */
 		jobid = jobattr->values[0].integer;
               else if (!strcmp(jobattr->name, "job-state") &&
 	               jobattr->value_tag == IPP_TAG_ENUM)
-		jobstate = jobattr->values[0].integer;
+		jobstate = (ipp_jstate_t)jobattr->values[0].integer;
 	    }
 
             if (jobstate != IPP_JOB_PROCESSING)
@@ -1879,8 +1757,7 @@ show_printers(const char  *printers,	/* I - Destinations */
         * Display it...
 	*/
 
-        pdate = localtime(&ptime);
-        strftime(printer_state_time, sizeof(printer_state_time), "%c", pdate);
+        _cupsStrDate(printer_state_time, sizeof(printer_state_time), ptime);
 
         switch (pstate)
 	{
@@ -1930,11 +1807,9 @@ show_printers(const char  *printers,	/* I - Destinations */
 	    for (i = 0, aptr = alerts; i < reasons->num_values; i ++)
 	    {
 	      if (i)
-		snprintf(aptr, sizeof(alerts) - (aptr - alerts), " %s",
-			 reasons->values[i].string.text);
+		snprintf(aptr, sizeof(alerts) - (size_t)(aptr - alerts), " %s", reasons->values[i].string.text);
 	      else
-		strlcpy(alerts, reasons->values[i].string.text,
-			sizeof(alerts));
+		strlcpy(alerts, reasons->values[i].string.text, sizeof(alerts));
 
 	      aptr += strlen(aptr);
 	    }
@@ -2056,11 +1931,9 @@ show_printers(const char  *printers,	/* I - Destinations */
 		for (i = 0, aptr = alerts; i < reasons->num_values; i ++)
 		{
 		  if (i)
-		    snprintf(aptr, sizeof(alerts) - (aptr - alerts), " %s",
-			     reasons->values[i].string.text);
+		    snprintf(aptr, sizeof(alerts) - (size_t)(aptr - alerts), " %s", reasons->values[i].string.text);
 		  else
-		    strlcpy(alerts, reasons->values[i].string.text,
-			    sizeof(alerts));
+		    strlcpy(alerts, reasons->values[i].string.text, sizeof(alerts));
 
 		  aptr += strlen(aptr);
 		}
@@ -2161,5 +2034,5 @@ show_scheduler(void)
 
 
 /*
- * End of "$Id: lpstat.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: lpstat.c 12124 2014-08-28 15:37:22Z msweet $".
  */

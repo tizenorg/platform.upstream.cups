@@ -1,48 +1,20 @@
 /*
- * "$Id: cups-driverd.cxx 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: cups-driverd.cxx 12733 2015-06-12 01:21:05Z msweet $"
  *
- *   PPD/driver support for CUPS.
+ * PPD/driver support for CUPS.
  *
- *   This program handles listing and installing static PPD files, PPD files
- *   created from driver information files, and dynamically generated PPD files
- *   using driver helper programs.
+ * This program handles listing and installing static PPD files, PPD files
+ * created from driver information files, and dynamically generated PPD files
+ * using driver helper programs.
  *
- *   Copyright 2007-2012 by Apple Inc.
- *   Copyright 1997-2007 by Easy Software Products.
+ * Copyright 2007-2015 by Apple Inc.
+ * Copyright 1997-2007 by Easy Software Products.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
- *
- * Contents:
- *
-﻿ *   main()	       - Scan for drivers and return an IPP response.
- *   add_ppd()	       - Add a PPD file.
- *   cat_drv()	       - Generate a PPD from a driver info file.
- *   cat_ppd()	       - Copy a PPD file to stdout.
- *   copy_static()     - Copy a static PPD file to stdout.
- *   cat_tar()	       - Copy an archived PPD file to stdout.
- *   compare_inodes()  - Compare two inodes.
- *   compare_matches() - Compare PPD match scores for sorting.
- *   compare_names()   - Compare PPD filenames for sorting.
- *   compare_ppds()    - Compare PPD file make and model names for sorting.
- *   dump_ppds_dat()   - Dump the contents of the ppds.dat file.
- *   free_array()      - Free an array of strings.
- *   get_file()        - Get the filename associated with a request.
- *   list_ppds()       - List PPD files.
- *   load_drv()        - Load the PPDs from a driver information file.
- *   load_drivers()    - Load driver-generated PPD files.
- *   load_ppd()        - Load a PPD file.
- *   load_ppds()       - Load PPD files recursively.
- *   load_ppds_dat()   - Load the ppds.dat file.
- *   load_tar()        - Load archived PPD files.
- *   read_tar()        - Read a file header from an archive.
- *   regex_device_id() - Compile a regular expression based on the 1284 device
- *			 ID.
- *   regex_string()    - Construct a regular expression to compare a simple
- *			 string.
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 /*
@@ -61,7 +33,7 @@
  * Constants...
  */
 
-#define PPD_SYNC	0x50504437	/* Sync word for ppds.dat (PPD7) */
+#define PPD_SYNC	0x50504438	/* Sync word for ppds.dat (PPD8) */
 #define PPD_MAX_LANG	32		/* Maximum languages */
 #define PPD_MAX_PROD	32		/* Maximum products */
 #define PPD_MAX_VERS	32		/* Maximum versions */
@@ -70,9 +42,12 @@
 #define PPD_TYPE_PDF		1	/* PDF PPD */
 #define PPD_TYPE_RASTER		2	/* CUPS raster PPD */
 #define PPD_TYPE_FAX		3	/* Facsimile/MFD PPD */
-#define PPD_TYPE_UNKNOWN	4	/* Other/hybrid PPD */
-#define PPD_TYPE_DRV		5	/* Driver info file */
-#define PPD_TYPE_ARCHIVE	6	/* Archive file */
+#define PPD_TYPE_OBJECT_ANY	4	/* 3D (AMF/STL/g-code) PPD */
+#define PPD_TYPE_OBJECT_DIRECT	5	/* 3D (AMF/STL/g-code) PPD over any connection */
+#define PPD_TYPE_OBJECT_STORAGE	6	/* 3D (AMF/STL/g-code) PPD for storage to SD card, etc. */
+#define PPD_TYPE_UNKNOWN	7	/* Other/hybrid PPD */
+#define PPD_TYPE_DRV		8	/* Driver info file */
+#define PPD_TYPE_ARCHIVE	9	/* Archive file */
 
 #define TAR_BLOCK	512		/* Number of bytes in a block */
 #define TAR_BLOCKS	10		/* Blocking factor */
@@ -163,6 +138,9 @@ static const char * const PPDTypes[] =	/* ppd-type values */
 			  "pdf",
 			  "raster",
 			  "fax",
+			  "object",
+			  "object-direct",
+			  "object-storage",
 			  "unknown",
 			  "drv",
 			  "archive"
@@ -291,7 +269,7 @@ add_ppd(const char *filename,		/* I - PPD filename */
 
   ppd->found               = 1;
   ppd->record.mtime        = mtime;
-  ppd->record.size         = size;
+  ppd->record.size         = (off_t)size;
   ppd->record.model_number = model_number;
   ppd->record.type         = type;
 
@@ -645,7 +623,7 @@ cat_tar(const char *name,		/* I - PPD name */
   */
 
   if ((fp = get_file(name, request_id, "model", filename, sizeof(filename),
-                     &ppdname)) == NULL)
+                     &ppdname)) == NULL || !ppdname)
     return (1);
 
  /*
@@ -674,7 +652,7 @@ cat_tar(const char *name,		/* I - PPD name */
         if ((size_t)(bytes = (curinfo.st_size - total)) > sizeof(buffer))
           bytes = sizeof(buffer);
 
-        if ((bytes = cupsFileRead(fp, buffer, bytes)) < 0)
+        if ((bytes = cupsFileRead(fp, buffer, (size_t)bytes)) < 0)
         {
           if (errno == EINTR || errno == EAGAIN)
           {
@@ -686,7 +664,7 @@ cat_tar(const char *name,		/* I - PPD name */
             break;
           }
         }
-        else if (bytes > 0 && fwrite(buffer, bytes, 1, stdout) != 1)
+        else if (bytes > 0 && fwrite(buffer, (size_t)bytes, 1, stdout) != 1)
           break;
       }
 
@@ -1053,8 +1031,6 @@ list_ppds(int        request_id,	/* I - Request ID */
 		*type_str;		/* ppd-type option */
   int		model_number,		/* ppd-model-number value */
 		type,			/* ppd-type value */
-		make_and_model_len,	/* Length of ppd-make-and-model */
-		product_len,		/* Length of ppd-product */
 		send_device_id,		/* Send ppd-device-id? */
 		send_make,		/* Send ppd-make? */
 		send_make_and_model,	/* Send ppd-make-and-model? */
@@ -1065,6 +1041,8 @@ list_ppds(int        request_id,	/* I - Request ID */
 		send_psversion,		/* Send ppd-psversion? */
 		send_type,		/* Send ppd-type? */
 		sent_header;		/* Sent the IPP header? */
+  size_t	make_and_model_len,	/* Length of ppd-make-and-model */
+		product_len;		/* Length of ppd-product */
   regex_t	*device_id_re,		/* Regular expression for matching device ID */
 		*make_and_model_re;	/* Regular expression for matching make and model */
   regmatch_t	re_matches[6];		/* Regular expression matches */
@@ -1349,7 +1327,7 @@ list_ppds(int        request_id,	/* I - Request ID */
 
       if (device_id_re &&
 	  !regexec(device_id_re, ppd->record.device_id,
-                   (int)(sizeof(re_matches) / sizeof(re_matches[0])),
+                   (size_t)(sizeof(re_matches) / sizeof(re_matches[0])),
 		   re_matches, 0))
       {
        /*
@@ -1379,13 +1357,13 @@ list_ppds(int        request_id,	/* I - Request ID */
 
       if (make_and_model_re &&
           !regexec(make_and_model_re, ppd->record.make_and_model,
-	           (int)(sizeof(re_matches) / sizeof(re_matches[0])),
+	           (size_t)(sizeof(re_matches) / sizeof(re_matches[0])),
 		   re_matches, 0))
       {
 	// See how much of the make-and-model string we matched...
 	if (re_matches[0].rm_so == 0)
 	{
-	  if (re_matches[0].rm_eo == make_and_model_len)
+	  if ((size_t)re_matches[0].rm_eo == make_and_model_len)
 	    ppd->matches += 3;		// Exact match
 	  else
 	    ppd->matches += 2;		// Prefix match
@@ -1637,8 +1615,7 @@ load_drv(const char  *filename,		/* I - Actual filename */
   * Add a dummy entry for the file...
   */
 
-  add_ppd(name, name, "", "", "", "", "", "", mtime, size, 0,
-          PPD_TYPE_DRV, "drv");
+  add_ppd(name, name, "", "", "", "", "", "", mtime, (size_t)size, 0, PPD_TYPE_DRV, "drv");
   ChangedPPD = 1;
 
  /*
@@ -1696,14 +1673,10 @@ load_drv(const char  *filename,		/* I - Actual filename */
       if (!strcmp(product->name->value, "Product"))
       {
         if (!products_found)
-	  ppd = add_ppd(name, uri, "en", d->manufacturer->value, make_model,
-		        device_id ? device_id->value->value : "",
-		        product->value->value,
-		        ps_version ? ps_version->value->value : "(3010) 0",
-		        mtime, size, d->model_number, type, "drv");
+	  ppd = add_ppd(name, uri, "en", d->manufacturer->value, make_model, device_id ? device_id->value->value : "", product->value->value,
+		        ps_version ? ps_version->value->value : "(3010) 0", mtime, (size_t)size, d->model_number, type, "drv");
 	else if (products_found < PPD_MAX_PROD)
-	  strlcpy(ppd->record.products[products_found], product->value->value,
-	          sizeof(ppd->record.products[0]));
+	  strlcpy(ppd->record.products[products_found], product->value->value, sizeof(ppd->record.products[0]));
 	else
 	  break;
 
@@ -1711,11 +1684,7 @@ load_drv(const char  *filename,		/* I - Actual filename */
       }
 
     if (!products_found)
-      add_ppd(name, uri, "en", d->manufacturer->value, make_model,
-	      device_id ? device_id->value->value : "",
-	      d->model_name->value,
-	      ps_version ? ps_version->value->value : "(3010) 0",
-	      mtime, size, d->model_number, type, "drv");
+      add_ppd(name, uri, "en", d->manufacturer->value, make_model, device_id ? device_id->value->value : "", d->model_name->value, ps_version ? ps_version->value->value : "(3010) 0", mtime, (size_t)size, d->model_number, type, "drv");
   }
 
   src->release();
@@ -1810,7 +1779,7 @@ load_drivers(cups_array_t *include,	/* I - Drivers to include */
 	scheme_end = scheme + strlen(scheme) - 1;
 
 	if ((scheme_end > scheme && *scheme_end == '*' &&
-	     !strncmp(scheme, dent->filename, scheme_end - scheme)) ||
+	     !strncmp(scheme, dent->filename, (size_t)(scheme_end - scheme))) ||
 	    !strcmp(scheme, dent->filename))
 	{
 	  fputs("DEBUG: [cups-driverd] Yes, exclude!\n", stderr);
@@ -1837,7 +1806,7 @@ load_drivers(cups_array_t *include,	/* I - Drivers to include */
 	scheme_end = scheme + strlen(scheme) - 1;
 
 	if ((scheme_end > scheme && *scheme_end == '*' &&
-	     !strncmp(scheme, dent->filename, scheme_end - scheme)) ||
+	     !strncmp(scheme, dent->filename, (size_t)(scheme_end - scheme))) ||
 	    !strcmp(scheme, dent->filename))
 	{
 	  fputs("DEBUG: [cups-driverd] Yes, include!\n", stderr);
@@ -1877,7 +1846,7 @@ load_drivers(cups_array_t *include,	/* I - Drivers to include */
         device_id[0] = '\0';
 	product[0]   = '\0';
 	psversion[0] = '\0';
-	strcpy(type_str, "postscript");
+	strlcpy(type_str, "postscript", sizeof(type_str));
 
         if (sscanf(line, "\"%511[^\"]\"%127s%*[ \t]\"%127[^\"]\""
 	                 "%*[ \t]\"%127[^\"]\"%*[ \t]\"%255[^\"]\""
@@ -2043,7 +2012,7 @@ load_ppd(const char  *filename,		/* I - Real filename */
   manufacturer[0]  = '\0';
   device_id[0]     = '\0';
   lang_encoding[0] = '\0';
-  strcpy(lang_version, "en");
+  strlcpy(lang_version, "en", sizeof(lang_version));
   model_number     = 0;
   install_group    = 0;
   type             = PPD_TYPE_POSTSCRIPT;
@@ -2132,12 +2101,28 @@ load_ppd(const char  *filename,		/* I - Real filename */
       if (!_cups_strncasecmp(ptr, "true", 4))
 	type = PPD_TYPE_FAX;
     }
-    else if (!strncmp(line, "*cupsFilter:", 12) && type == PPD_TYPE_POSTSCRIPT)
+    else if ((!strncmp(line, "*cupsFilter:", 12) || !strncmp(line, "*cupsFilter2:", 13)) && type == PPD_TYPE_POSTSCRIPT)
     {
       if (strstr(line + 12, "application/vnd.cups-raster"))
 	type = PPD_TYPE_RASTER;
       else if (strstr(line + 12, "application/vnd.cups-pdf"))
 	type = PPD_TYPE_PDF;
+      else if (strstr(line + 12, "application/amf") ||
+               strstr(line + 12, "application/g-code") ||
+               strstr(line + 12, "application/sla"))
+	type = PPD_TYPE_OBJECT_ANY;
+    }
+    else if (!strncmp(line, "*cups3DWorkflows:", 17))
+    {
+      int is_direct = strstr(line + 17, "direct") != NULL;
+      int is_storage = strstr(line + 17, "storage") != NULL;
+
+      if (is_direct && !is_storage)
+        type = PPD_TYPE_OBJECT_DIRECT;
+      if (!is_direct && is_storage)
+        type = PPD_TYPE_OBJECT_STORAGE;
+      else
+        type = PPD_TYPE_OBJECT_ANY;
     }
     else if (!strncmp(line, "*cupsModelNumber:", 17))
       sscanf(line, "*cupsModelNumber:%d", &model_number);
@@ -2166,7 +2151,7 @@ load_ppd(const char  *filename,		/* I - Real filename */
     cupsCharsetToUTF8((cups_utf8_t *)make_model, nick_name,
 		      sizeof(make_model), _ppdGetEncoding(lang_encoding));
   else
-    strcpy(make_model, model_name);
+    strlcpy(make_model, model_name, sizeof(make_model));
 
   while (isspace(make_model[0] & 255))
     _cups_strcpy(make_model, make_model + 1);
@@ -2236,13 +2221,13 @@ load_ppd(const char  *filename,		/* I - Real filename */
     if (*ptr && ptr > manufacturer)
       *ptr = '\0';
     else
-      strcpy(manufacturer, "Other");
+      strlcpy(manufacturer, "Other", sizeof(manufacturer));
   }
   else if (!_cups_strncasecmp(manufacturer, "LHAG", 4) ||
 	   !_cups_strncasecmp(manufacturer, "linotype", 8))
-    strcpy(manufacturer, "LHAG");
+    strlcpy(manufacturer, "LHAG", sizeof(manufacturer));
   else if (!_cups_strncasecmp(manufacturer, "Hewlett", 7))
-    strcpy(manufacturer, "HP");
+    strlcpy(manufacturer, "HP", sizeof(manufacturer));
 
  /*
   * Fix the lang_version as needed...
@@ -2290,7 +2275,7 @@ load_ppd(const char  *filename,		/* I - Real filename */
     * Unknown language; use "xx"...
     */
 
-    strcpy(lang_version, "xx");
+    strlcpy(lang_version, "xx", sizeof(lang_version));
   }
 
  /*
@@ -2307,11 +2292,7 @@ load_ppd(const char  *filename,		/* I - Real filename */
 
     fprintf(stderr, "DEBUG2: [cups-driverd] Adding ppd \"%s\"...\n", name);
 
-    ppd = add_ppd(name, name, lang_version, manufacturer, make_model,
-		  device_id, (char *)cupsArrayFirst(products),
-		  (char *)cupsArrayFirst(psversions),
-		  fileinfo->st_mtime, fileinfo->st_size,
-		  model_number, type, scheme);
+    ppd = add_ppd(name, name, lang_version, manufacturer, make_model, device_id, (char *)cupsArrayFirst(products), (char *)cupsArrayFirst(psversions), fileinfo->st_mtime, (size_t)fileinfo->st_size, model_number, type, scheme);
 
     if (!ppd)
       return;
@@ -2519,8 +2500,8 @@ load_ppds(const char *d,		/* I - Actual directory */
     * See if this file has been scanned before...
     */
 
-    strcpy(key.record.filename, name);
-    strcpy(key.record.name, name);
+    strlcpy(key.record.filename, name, sizeof(key.record.filename));
+    strlcpy(key.record.name, name, sizeof(key.record.name));
 
     ppd = (ppd_info_t *)cupsArrayFind(PPDsByName, &key);
 
@@ -2634,13 +2615,11 @@ load_ppds_dat(char   *filename,		/* I - Filename buffer */
     unsigned ppdsync;			/* Sync word */
     int      num_ppds;			/* Number of PPDs */
 
-    if (cupsFileRead(fp, (char *)&ppdsync, sizeof(ppdsync))
-            == sizeof(ppdsync) &&
+    if (cupsFileRead(fp, (char *)&ppdsync, sizeof(ppdsync)) == sizeof(ppdsync) &&
         ppdsync == PPD_SYNC &&
         !stat(filename, &fileinfo) &&
-	((fileinfo.st_size - sizeof(ppdsync)) % sizeof(ppd_rec_t)) == 0 &&
-	(num_ppds = (fileinfo.st_size - sizeof(ppdsync)) /
-	            sizeof(ppd_rec_t)) > 0)
+	(((size_t)fileinfo.st_size - sizeof(ppdsync)) % sizeof(ppd_rec_t)) == 0 &&
+	(num_ppds = ((size_t)fileinfo.st_size - sizeof(ppdsync)) / sizeof(ppd_rec_t)) > 0)
     {
      /*
       * We have a ppds.dat file, so read it!
@@ -2702,8 +2681,7 @@ load_tar(const char  *filename,		/* I - Actual filename */
 
   (void)filename;
 
-  add_ppd(name, name, "", "", "", "", "", "", mtime, size, 0,
-          PPD_TYPE_ARCHIVE, "file");
+  add_ppd(name, name, "", "", "", "", "", "", mtime, (size_t)size, 0, PPD_TYPE_ARCHIVE, "file");
   ChangedPPD = 1;
 
  /*
@@ -2947,5 +2925,5 @@ regex_string(const char *s)		/* I - String to compare */
 
 
 /*
- * End of "$Id: cups-driverd.cxx 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: cups-driverd.cxx 12733 2015-06-12 01:21:05Z msweet $".
  */

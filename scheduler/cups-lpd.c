@@ -1,27 +1,16 @@
 /*
- * "$Id: cups-lpd.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: cups-lpd.c 12611 2015-05-06 15:30:36Z msweet $"
  *
- *   Line Printer Daemon interface for CUPS.
+ * Line Printer Daemon interface for CUPS.
  *
- *   Copyright 2007-2012 by Apple Inc.
- *   Copyright 1997-2006 by Easy Software Products, all rights reserved.
+ * Copyright 2007-2015 by Apple Inc.
+ * Copyright 1997-2006 by Easy Software Products, all rights reserved.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
- *
- * Contents:
- *
- *   main()           - Process an incoming LPD request...
- *   create_job()     - Create a new print job.
- *   get_printer()    - Get the named printer and its options.
- *   print_file()     - Add a file to the current job.
- *   recv_print_job() - Receive a print job from the client.
- *   remove_jobs()    - Cancel one or more jobs.
- *   send_state()     - Send the queue state.
- *   smart_gets()     - Get a line of text, removing the trailing CR and/or LF.
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 /*
@@ -40,6 +29,9 @@
 #ifdef HAVE_INTTYPES_H
 #  include <inttypes.h>
 #endif /* HAVE_INTTYPES_H */
+#ifdef __APPLE__
+#  include <vproc.h>
+#endif /* __APPLE__ */
 
 
 /*
@@ -70,7 +62,7 @@ static int	create_job(http_t *http, const char *dest, const char *title,
                            const char *docname, const char *user,
 			   int num_options, cups_option_t *options);
 static int	get_printer(http_t *http, const char *name, char *dest,
-		            int destsize, cups_option_t **options,
+		            size_t destsize, cups_option_t **options,
 			    int *accepting, int *shared, ipp_pstate_t *state);
 static int	print_file(http_t *http, int id, const char *filename,
 		           const char *docname, const char *user,
@@ -107,6 +99,9 @@ main(int  argc,				/* I - Number of command-line arguments */
 		hostip[256],		/* IP address */
 		*hostfamily;		/* Address family */
   int		hostlookups;		/* Do hostname lookups? */
+#ifdef __APPLE__
+  vproc_transaction_t vtran = vproc_transaction_begin(NULL);
+#endif /* __APPLE__ */
 
 
  /*
@@ -184,7 +179,7 @@ main(int  argc,				/* I - Number of command-line arguments */
   if (getpeername(0, (struct sockaddr *)&hostaddr, &hostlen))
   {
     syslog(LOG_WARNING, "Unable to get client address - %s", strerror(errno));
-    strcpy(hostname, "unknown");
+    strlcpy(hostname, "unknown", sizeof(hostname));
   }
   else
   {
@@ -222,6 +217,11 @@ main(int  argc,				/* I - Number of command-line arguments */
 
     syslog(LOG_ERR, "Unable to get command line from client!");
     putchar(1);
+
+#ifdef __APPLE__
+    vproc_transaction_end(NULL, vtran);
+#endif /* __APPLE__ */
+
     return (1);
   }
 
@@ -230,8 +230,10 @@ main(int  argc,				/* I - Number of command-line arguments */
   * resource list, and/or user name.
   */
 
-  command = line[0];
-  dest    = line + 1;
+  if ((command = line[0]) == '\0')
+    dest = line;
+  else
+    dest = line + 1;
 
   if (command == 0x02)
     list = NULL;
@@ -268,21 +270,21 @@ main(int  argc,				/* I - Number of command-line arguments */
         syslog(LOG_INFO, "Receive print job for %s", dest);
         /* recv_print_job() sends initial status byte */
 
-        status = recv_print_job(dest, num_defaults, defaults);
+        status = (char)recv_print_job(dest, num_defaults, defaults);
 	break;
 
     case 0x03 : /* Send queue state (short) */
         syslog(LOG_INFO, "Send queue state (short) for %s %s", dest, list);
 	/* no status byte for this command */
 
-        status = send_state(dest, list, 0);
+        status = (char)send_state(dest, list, 0);
 	break;
 
     case 0x04 : /* Send queue state (long) */
         syslog(LOG_INFO, "Send queue state (long) for %s %s", dest, list);
 	/* no status byte for this command */
 
-        status = send_state(dest, list, 1);
+        status = (char)send_state(dest, list, 1);
 	break;
 
     case 0x05 : /* Remove jobs */
@@ -300,7 +302,7 @@ main(int  argc,				/* I - Number of command-line arguments */
 
 	  syslog(LOG_INFO, "Remove jobs %s on %s by %s", list, dest, agent);
 
-	  status = remove_jobs(dest, agent, list);
+	  status = (char)remove_jobs(dest, agent, list);
         }
 	else
 	  status = 1;
@@ -311,6 +313,10 @@ main(int  argc,				/* I - Number of command-line arguments */
 
   syslog(LOG_INFO, "Closing connection");
   closelog();
+
+#ifdef __APPLE__
+  vproc_transaction_end(NULL, vtran);
+#endif /* __APPLE__ */
 
   return (status);
 }
@@ -409,7 +415,7 @@ static int				/* O - Number of options or -1 on error */
 get_printer(http_t        *http,	/* I - HTTP connection */
             const char    *name,	/* I - Printer name from request */
 	    char          *dest,	/* I - Destination buffer */
-            int           destsize,	/* I - Size of destination buffer */
+            size_t        destsize,	/* I - Size of destination buffer */
 	    cups_option_t **options,	/* O - Printer options */
 	    int           *accepting,	/* O - printer-is-accepting-jobs value */
 	    int           *shared,	/* O - printer-is-shared value */
@@ -744,7 +750,7 @@ print_file(http_t     *http,		/* I - HTTP connection */
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE,
                  "document-format", NULL, format);
 
-  ippAddBoolean(request, IPP_TAG_OPERATION, "last-document", last);
+  ippAddBoolean(request, IPP_TAG_OPERATION, "last-document", (char)last);
 
  /*
   * Do the request...
@@ -781,7 +787,8 @@ recv_print_job(
   int		fd;			/* Temporary file */
   FILE		*fp;			/* File pointer */
   char		filename[1024];		/* Temporary filename */
-  int		bytes;			/* Bytes received */
+  ssize_t	bytes;			/* Bytes received */
+  size_t	total;			/* Total bytes */
   char		line[256],		/* Line from file/stdin */
 		command,		/* Command from line */
 		*count,			/* Number of bytes */
@@ -914,7 +921,7 @@ recv_print_job(
 	      break;
 	    }
 
-	    strcpy(filename, control);
+	    strlcpy(filename, control, sizeof(filename));
 	  }
 	  break;
 
@@ -950,7 +957,7 @@ recv_print_job(
 	    break;
 	  }
 
-	  strcpy(filename, temp[num_data]);
+	  strlcpy(filename, temp[num_data], sizeof(filename));
 
           num_data ++;
 	  break;
@@ -965,15 +972,15 @@ recv_print_job(
     * Copy the data or control file from the client...
     */
 
-    for (i = atoi(count); i > 0; i -= bytes)
+    for (total = (size_t)strtoll(count, NULL, 10); total > 0; total -= (size_t)bytes)
     {
-      if (i > sizeof(line))
-        bytes = sizeof(line);
+      if (total > sizeof(line))
+        bytes = (ssize_t)sizeof(line);
       else
-        bytes = i;
+        bytes = (ssize_t)total;
 
-      if ((bytes = fread(line, 1, bytes, stdin)) > 0)
-        bytes = write(fd, line, bytes);
+      if ((bytes = (ssize_t)fread(line, 1, (size_t)bytes, stdin)) > 0)
+        bytes = write(fd, line, (size_t)bytes);
 
       if (bytes < 1)
       {
@@ -1116,7 +1123,7 @@ recv_print_job(
       {
 	syslog(LOG_WARNING, "No username specified by client! "
 		            "Using \"anonymous\"...");
-	strcpy(user, "anonymous");
+	strlcpy(user, "anonymous", sizeof(user));
       }
 
      /*
@@ -1528,7 +1535,7 @@ send_state(const char *queue,		/* I - Destination */
     */
 
     if (jobstate == IPP_JOB_PROCESSING)
-      strcpy(rankstr, "active");
+      strlcpy(rankstr, "active", sizeof(rankstr));
     else
     {
       snprintf(rankstr, sizeof(rankstr), "%d%s", rank, ranks[rank % 10]);
@@ -1609,7 +1616,7 @@ smart_gets(char *s,			/* I - Pointer to line buffer */
       break;
     }
     else if (ptr < end)
-      *ptr++ = ch;
+      *ptr++ = (char)ch;
   }
 
   *ptr = '\0';
@@ -1622,5 +1629,5 @@ smart_gets(char *s,			/* I - Pointer to line buffer */
 
 
 /*
- * End of "$Id: cups-lpd.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: cups-lpd.c 12611 2015-05-06 15:30:36Z msweet $".
  */

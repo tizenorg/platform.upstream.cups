@@ -1,16 +1,16 @@
 /*
- * "$Id: printers.h 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: printers.h 12666 2015-05-25 19:38:09Z msweet $"
  *
- *   Printer definitions for the CUPS scheduler.
+ * Printer definitions for the CUPS scheduler.
  *
- *   Copyright 2007-2012 by Apple Inc.
- *   Copyright 1997-2007 by Easy Software Products, all rights reserved.
+ * Copyright 2007-2013 by Apple Inc.
+ * Copyright 1997-2007 by Easy Software Products, all rights reserved.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 #ifdef HAVE_DNSSD
@@ -63,9 +63,12 @@ struct cupsd_printer_s
 		*uuid,			/* Printer UUID */
 		*hostname,		/* Host printer resides on */
 		*name,			/* Printer name */
-		*location,		/* Location code */
+		*location,		/* Location string */
+		*geo_location,		/* Geographic location URI */
 		*make_model,		/* Make and model */
 		*info,			/* Description */
+		*organization,		/* Organization name */
+		*organizational_unit,	/* Organizational unit (department, etc.) */
 		*op_policy,		/* Operation policy name */
 		*error_policy;		/* Error policy */
   cupsd_policy_t *op_policy_ptr;	/* Pointer to operation policy */
@@ -77,7 +80,8 @@ struct cupsd_printer_s
   char		state_message[1024];	/* Printer state message */
   int		num_reasons;		/* Number of printer-state-reasons */
   char		*reasons[64];		/* printer-state-reasons strings */
-  time_t	state_time;		/* Time at this state */
+  time_t	config_time,		/* Time at this configuration */
+		state_time;		/* Time at this state */
   char		*job_sheets[2];		/* Banners/job sheets */
   cups_ptype_t	type;			/* Printer type (color, small, etc.) */
   char		*device_uri;		/* Device URI */
@@ -166,7 +170,8 @@ extern int		cupsdSetAuthInfoRequired(cupsd_printer_t *p,
 						 ipp_attribute_t *attr);
 extern void		cupsdSetDeviceURI(cupsd_printer_t *p, const char *uri);
 extern void		cupsdSetPrinterAttr(cupsd_printer_t *p,
-			                    const char *name, char *value);
+			                    const char *name,
+			                    const char *value);
 extern void		cupsdSetPrinterAttrs(cupsd_printer_t *p);
 extern int		cupsdSetPrinterReasons(cupsd_printer_t *p,
 			                       const char *s);
@@ -189,5 +194,5 @@ extern void		cupsdWritePrintcap(void);
 
 
 /*
- * End of "$Id: printers.h 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: printers.h 12666 2015-05-25 19:38:09Z msweet $".
  */

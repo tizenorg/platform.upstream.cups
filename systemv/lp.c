@@ -1,22 +1,16 @@
 /*
- * "$Id: lp.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: lp.c 11558 2014-02-06 18:33:34Z msweet $"
  *
- *   "lp" command for CUPS.
+ * "lp" command for CUPS.
  *
- *   Copyright 2007-2013 by Apple Inc.
- *   Copyright 1997-2007 by Easy Software Products.
+ * Copyright 2007-2014 by Apple Inc.
+ * Copyright 1997-2007 by Easy Software Products.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
- *
- * Contents:
- *
- *   main()          - Parse options and send files for printing.
- *   restart_job()   - Restart a job.
- *   set_job_attrs() - Set job attributes.
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 /*
@@ -156,8 +150,8 @@ main(int  argc,				/* I - Number of command-line arguments */
 		                              dest->options[j].value,
 					      num_options, &options);
 	    }
-	    else if (cupsLastError() == IPP_BAD_REQUEST ||
-		     cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+	    else if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+		     cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
 	    {
 	      _cupsLangPrintf(stderr,
 			      _("%s: Error - add '/version=1.1' to server "
@@ -576,8 +570,8 @@ main(int  argc,				/* I - Number of command-line arguments */
 		                      dest->options[j].value,
 				      num_options, &options);
     }
-    else if (cupsLastError() == IPP_BAD_REQUEST ||
-	     cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+    else if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+	     cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
     {
       _cupsLangPrintf(stderr,
 		      _("%s: Error - add '/version=1.1' to server "
@@ -640,7 +634,7 @@ main(int  argc,				/* I - Number of command-line arguments */
 
     while (status == HTTP_CONTINUE &&
            (bytes = read(0, buffer, sizeof(buffer))) > 0)
-      status = cupsWriteRequestData(CUPS_HTTP_DEFAULT, buffer, bytes);
+      status = cupsWriteRequestData(CUPS_HTTP_DEFAULT, buffer, (size_t)bytes);
 
     if (status != HTTP_CONTINUE)
     {
@@ -696,8 +690,8 @@ restart_job(const char *command,	/* I - Command name */
 
   ippDelete(cupsDoRequest(CUPS_HTTP_DEFAULT, request, "/jobs"));
 
-  if (cupsLastError() == IPP_BAD_REQUEST ||
-      cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+  if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+      cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
   {
     _cupsLangPrintf(stderr,
 		    _("%s: Error - add '/version=1.1' to server "
@@ -745,8 +739,8 @@ set_job_attrs(const char    *command,	/* I - Command name */
 
   ippDelete(cupsDoRequest(CUPS_HTTP_DEFAULT, request, "/jobs"));
 
-  if (cupsLastError() == IPP_BAD_REQUEST ||
-      cupsLastError() == IPP_VERSION_NOT_SUPPORTED)
+  if (cupsLastError() == IPP_STATUS_ERROR_BAD_REQUEST ||
+      cupsLastError() == IPP_STATUS_ERROR_VERSION_NOT_SUPPORTED)
   {
     _cupsLangPrintf(stderr,
 		    _("%s: Error - add '/version=1.1' to server "
@@ -764,5 +758,5 @@ set_job_attrs(const char    *command,	/* I - Command name */
 
 
 /*
- * End of "$Id: lp.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: lp.c 11558 2014-02-06 18:33:34Z msweet $".
  */

@@ -26,10 +26,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: CUPS 1.6\n"
+"Project-Id-Version: CUPS 2.0\n"
 "Report-Msgid-Bugs-To: http://www.cups.org/str.php\n"
-"POT-Creation-Date: 2013-07-08 07:38-0400\n"
-"PO-Revision-Date: 2012-06-13 01:20+0900\n"
+"POT-Creation-Date: 2015-07-20 14:24-0400\n"
+"PO-Revision-Date: 2014-11-15 19:27+0900\n"
 "Last-Translator: OPFC TRANSCUPS <opfc-transcups@sourceforge.jp>\n"
 "Language-Team: OPFC TRANSCUPS <opfc-transcups@sourceforge.jp>\n"
 "Language: ja\n"
@@ -401,7 +401,7 @@ msgstr "      %s  不正な値が cupsFilter2 に設定されています。 \"%
 
 #, c-format
 msgid "      %s  Bad cupsICCProfile %s."
-msgstr "      %s  不正な cupsICCProfile %sです。"
+msgstr "      %s  不正な cupsICCProfile %s です。"
 
 #, c-format
 msgid "      %s  Bad cupsPreFilter value \"%s\"."
@@ -409,11 +409,11 @@ msgstr "      %s  不正な値が cupsPreFilter に設定されています。 \
 
 #, c-format
 msgid "      %s  Bad cupsUIConstraints %s: \"%s\""
-msgstr "      %s  不正な cupsUIConstraints %s: \"%s\"です。"
+msgstr "      %s  不正な cupsUIConstraints %s: \"%s\" です。"
 
 #, c-format
 msgid "      %s  Bad language \"%s\"."
-msgstr "      %s  無効な言語 \"%s\"です。"
+msgstr "      %s  無効な言語 \"%s\" です。"
 
 #, c-format
 msgid "      %s  Bad permissions on %s file \"%s\"."
@@ -433,7 +433,7 @@ msgstr "      %s  デフォルトの選択肢が競合しています。"
 
 #, c-format
 msgid "      %s  Empty cupsUIConstraints %s"
-msgstr "      %s 空の cupsUIConstraints %sです。"
+msgstr "      %s 空の cupsUIConstraints %s です。"
 
 #, c-format
 msgid "      %s  Missing \"%s\" translation string for option %s, choice %s."
@@ -930,6 +930,12 @@ msgstr "    警告: ファイルに %%EndComments コメントがありません
 msgid "    Warning: obsolete DSC version %.1f in file."
 msgstr "    警告: ファイルは時代遅れの DSC バージョン %.1f です。"
 
+msgid "  ! expression            Unary NOT of expression."
+msgstr "! <式>                  式を否定する単項演算子。"
+
+msgid "  ( expressions )         Group expressions."
+msgstr "  ( <複数の式> )          グループ化された複数の式。"
+
 msgid "  --[no-]debug-logging    Turn debug logging on/off."
 msgstr "  --[no-]debug-logging    デバッグログの有効/無効を切り替える。"
 
@@ -953,8 +959,91 @@ msgstr "  --cr                    行末を CR とする (Mac OS 9)。"
 msgid "  --crlf                  End lines with CR + LF (Windows)."
 msgstr "  --crlf                  行末を CR + LF とする (Windows)。"
 
+msgid "  --domain regex          Match domain to regular expression."
+msgstr "  --domain <正規表現>     ドメインが正規表現にマッチするか。"
+
+msgid ""
+"  --exec utility [argument ...] ;\n"
+"                          Execute program if true."
+msgstr ""
+"  --exec <実行ファイル名> [引数 ...] ;\n"
+"                          成功した場合、<実行ファイル名>を実行する。"
+
+msgid "  --false                 Always false."
+msgstr "  --false                 常に失敗。"
+
+msgid "  --help                  Show help."
+msgstr "  --help                  ヘルプを表示する。"
+
+msgid "  --help                  Show this help."
+msgstr "  --help                  このヘルプを表示する。"
+
+msgid "  --host regex            Match hostname to regular expression."
+msgstr "  --host <正規表現>       ホスト名が正規表現にマッチするか。"
+
 msgid "  --lf                    End lines with LF (UNIX/Linux/OS X)."
 msgstr "  --lf                    行末を LF とする (UNIX/Linux/OS X)。"
+
+msgid "  --list-filters          List filters that will be used."
+msgstr "  --list-filters          使用されるフィルターのリストを表示する。"
+
+msgid "  --local                 True if service is local."
+msgstr "  --local                 サービスがローカルなら真。"
+
+msgid "  --ls                    List attributes."
+msgstr "  --ls                    属性の一覧を表示する。"
+
+msgid "  --name regex            Match service name to regular expression."
+msgstr "  --name <正規表現>       サービス名が正規表現とマッチするか。"
+
+msgid "  --not expression        Unary NOT of expression."
+msgstr "  --not <式>              式を否定する単項演算子。"
+
+msgid "  --path regex            Match resource path to regular expression."
+msgstr "  --path <正規表現>       リソースのパスが正規表現とマッチするか。"
+
+msgid "  --port number[-number]  Match port to number or range."
+msgstr ""
+"  --port 番号[-番号]      ポートが指定された番号または範囲とマッチするか。"
+
+msgid "  --print                 Print URI if true."
+msgstr "  --print                 結果が真なら URI を表示する。"
+
+msgid "  --print-name            Print service name if true."
+msgstr "  --print-name            結果が真ならサービス名を表示する。"
+
+msgid "  --quiet                 Quietly report match via exit code."
+msgstr ""
+"  --quiet                 マッチ結果を終了コードで報告し、出力をしない。"
+
+msgid "  --remote                True if service is remote."
+msgstr "  --remote                サービスがリモートなら真。"
+
+msgid ""
+"  --stop-after-include-error\n"
+"                          Stop tests after a failed INCLUDE."
+msgstr ""
+"  --stop-after-include-error\n"
+"                          INCLUDE が失敗したときテストを停止する。"
+
+msgid "  --true                  Always true."
+msgstr "  --true                  常に真。"
+
+msgid "  --txt key               True if the TXT record contains the key."
+msgstr "  --txt <キー名>          TXT レコードがキー名を含んでいたら真。"
+
+msgid "  --txt-* regex           Match TXT record key to regular expression."
+msgstr ""
+"  --txt-* <正規表現>      TXT レコードのキーが正規表現とマッチしたら真。"
+
+msgid "  --uri regex             Match URI to regular expression."
+msgstr "  --uri <正規表現>        URI が正規表現とマッチするか。"
+
+msgid "  --version               Show program version."
+msgstr "  --version               プログラムのバージョンを表示。"
+
+msgid "  --version               Show version."
+msgstr "  --version               バージョンを表示する。"
 
 msgid "  -4                      Connect using IPv4."
 msgstr "  -4                      IPv4 で接続する。"
@@ -1002,14 +1091,28 @@ msgstr "  -I {filename,filters,none,profiles}"
 msgid "  -L                      Send requests using content-length."
 msgstr "  -L                      content-length を用いてリクエストを送る。"
 
+msgid ""
+"  -P filename.plist       Produce XML plist to a file and test report to "
+"standard output."
+msgstr ""
+"  -P filename.plist       XML の plist 形式で書き出しテストリポートを標準出力"
+"にする。"
+
 msgid "  -P filename.ppd         Set PPD file."
 msgstr "  -P filename.ppd         PPD ファイルを指定する。"
+
+msgid "  -P number[-number]      Match port to number or range."
+msgstr ""
+"  -P 番号[-番号]          ポートが指定された番号または範囲とマッチするか。"
 
 msgid "  -R root-directory       Set alternate root."
 msgstr "  -R root-directory       別のルートディレクトリーを指定する。"
 
 msgid "  -S                      Test with SSL encryption."
 msgstr "  -S                      SSL 暗号化でテストする。"
+
+msgid "  -T seconds              Set the browse timeout in seconds."
+msgstr "  -T <秒>                 ブラウズのタイムアウトを秒で指定する。"
 
 msgid "  -T seconds              Set the receive/send timeout in seconds."
 msgstr "  -T seconds              受信／送信タイムアウトを秒で指定する。"
@@ -1030,14 +1133,26 @@ msgstr ""
 msgid "  -X                      Produce XML plist instead of plain text."
 msgstr "  -X                      プレーンテキストの代わりに XML を用いる。"
 
+msgid "  -a                      Browse for all services."
+msgstr "  -a                      すべてのサービスをブラウズする。"
+
 msgid "  -a                      Export all printers."
 msgstr "  -a                      すべてのプリンターをエクスポートする。"
+
+msgid "  -c                      Produce CSV output."
+msgstr "  -c                      CSV 出力を行う。"
 
 msgid "  -c catalog.po           Load the specified message catalog."
 msgstr "  -c catalog.po           指定したメッセージカタログをロードする。"
 
+msgid "  -c cups-files.conf      Set cups-files.conf file to use."
+msgstr "  -c cups-files.conf      cups-files.conf を利用するよう設定する。"
+
 msgid "  -c cupsd.conf           Set cupsd.conf file to use."
 msgstr "  -c cupsd.conf           使用する cupsd.conf ファイルを指定する。"
+
+msgid "  -d domain               Browse/resolve in specified domain."
+msgstr "  -d <ドメイン名>         指定されたドメインでブラウズ/名前解決する。"
 
 msgid "  -d name=value           Set named variable to value."
 msgstr ""
@@ -1048,6 +1163,9 @@ msgstr "  -d output-dir           出力先ディレクトリーを指定する�
 
 msgid "  -d printer              Use the named printer."
 msgstr "  -d printer              指定されたプリンターを利用する。"
+
+msgid "  -d regex                Match domain to regular expression."
+msgstr "  -d <正規表現>           ドメインが正規表現にマッチするか。"
 
 msgid "  -e                      Use every filter from the PPD file."
 msgstr ""
@@ -1061,6 +1179,9 @@ msgstr "  -f filename             デフォルトのリクエストファイル�
 
 msgid "  -h                      Show this usage message."
 msgstr "  -h                      このヘルプメッセージを表示する。"
+
+msgid "  -h regex                Match hostname to regular expression."
+msgstr "  -h <正規表現>           ホスト名が正規表現にマッチするか。"
 
 msgid "  -h server[:port]        Specify server address."
 msgstr "  -h server[:port]        サーバーアドレスを指定する。"
@@ -1082,8 +1203,14 @@ msgstr ""
 "  -j job-id[,N]           フィルターファイル N を指定されたジョブから使用す"
 "る (デフォルトは ファイル 1)。"
 
-msgid "  -l                      Run cupsd from launchd(8)."
-msgstr "  -l                      launchd(8) から cupsd を実行する。"
+msgid "  -l                      List attributes."
+msgstr "  -l                      属性の一覧を表示する。"
+
+msgid "  -l                      Produce plain text output."
+msgstr "  -l                      プレーンテキスト出力を行う。"
+
+msgid "  -l                      Run cupsd on demand."
+msgstr "  -l                      cupsd をオンデマンドで実行する。"
 
 msgid "  -l lang[,lang,...]      Specify the output language(s) (locale)."
 msgstr "  -l lang[,lang,...]      出力言語を指定する。(複数可能)"
@@ -1104,6 +1231,9 @@ msgid ""
 "  -n count                Repeat the last file the given number of times."
 msgstr "  -n count                最後のファイルを与えられた回数だけ繰り返す。"
 
+msgid "  -n regex                Match service name to regular expression."
+msgstr "  -n <正規表現>           サービス名が正規表現とマッチするか。"
+
 msgid ""
 "  -o filename.drv         Set driver information file (otherwise ppdi.drv)."
 msgstr ""
@@ -1117,14 +1247,32 @@ msgstr ""
 msgid "  -o name=value           Set option(s)."
 msgstr "  -o name=value           オプションを指定する。"
 
+msgid "  -p                      Print URI if true."
+msgstr "  -p                      結果が真なら URI を表示する。"
+
 msgid "  -p filename.ppd         Set PPD file."
 msgstr "  -p filename.ppd         PPD ファイルを指定する。"
+
+msgid "  -p program              Run specified program for each service."
+msgstr ""
+"  -p <プログラム名>       指定されたプログラムをそれぞれのサービスに対し実行"
+"する。"
+
+msgid "  -q                      Quietly report match via exit code."
+msgstr ""
+"  -q                      マッチ結果を終了コードで報告し、出力をしない。"
 
 msgid "  -q                      Run silently."
 msgstr "  -q                      詳細は表示しない。"
 
+msgid "  -r                      True if service is remote."
+msgstr "  -r                      サービスがリモートなら真。"
+
 msgid "  -r                      Use 'relaxed' open mode."
 msgstr "  -r                      寛容モードを用いる。"
+
+msgid "  -s                      Print service name if true."
+msgstr "  -s                      結果が真ならサービス名を表示する。"
 
 msgid "  -t                      Produce a test report."
 msgstr "  -t                      テストリポートを出力する。"
@@ -1135,11 +1283,20 @@ msgstr "  -t                      PPD を出力しないでテストする。"
 msgid "  -t                      Test the configuration file."
 msgstr "  -t                      設定ファイルをテストする。"
 
+msgid "  -t key                  True if the TXT record contains the key."
+msgstr "  -t <キー名>             TXT レコードがキー名を含んでいたら真。"
+
 msgid "  -t title                Set title."
 msgstr "  -t title                タイトルを指定する。"
 
+msgid "  -t type                 Browse/resolve with specified type."
+msgstr "  -t タイプ               指定されたタイプでブラウズ/名前解決する。"
+
 msgid "  -u                      Remove the PPD file when finished."
 msgstr "  -u                      終了したときに PPD ファイルを削除する。"
+
+msgid "  -u regex                Match URI to regular expression."
+msgstr "  -u <正規表現>           URI が正規表現とマッチするか。"
 
 msgid "  -v                      Be verbose."
 msgstr "  -v                      冗長出力を行う。"
@@ -1147,8 +1304,83 @@ msgstr "  -v                      冗長出力を行う。"
 msgid "  -vv                     Be very verbose."
 msgstr "  -vv                     より冗長な出力を行う。"
 
+msgid ""
+"  -x utility [argument ...] ;\n"
+"                          Execute program if true."
+msgstr ""
+"  -x <実行ファイル名> [引数 ...] ;\n"
+"                          成功した場合、<実行ファイル名> を実行する。"
+
 msgid "  -z                      Compress PPD files using GNU zip."
 msgstr "  -z                      PPD ファイルを GNU zip を使って圧縮する。"
+
+msgid "  IPPFIND_SERVICE_DOMAIN  Domain name"
+msgstr "  IPPFIND_SERVICE_DOMAIN  ドメイン名"
+
+msgid ""
+"  IPPFIND_SERVICE_HOSTNAME\n"
+"                          Fully-qualified domain name"
+msgstr ""
+"  IPPFIND_SERVICE_HOSTNAME\n"
+"                          完全修飾ドメイン名 (FQDN)"
+
+msgid "  IPPFIND_SERVICE_NAME    Service instance name"
+msgstr "  IPPFIND_SERVICE_NAME    サービスインスタンス名"
+
+msgid "  IPPFIND_SERVICE_PORT    Port number"
+msgstr "  IPPFIND_SERVICE_PORT    ポート番号"
+
+msgid "  IPPFIND_SERVICE_REGTYPE DNS-SD registration type"
+msgstr "  IPPFIND_SERVICE_REGTYPE DNS-SD 登録タイプ"
+
+msgid "  IPPFIND_SERVICE_SCHEME  URI scheme"
+msgstr "  IPPFIND_SERVICE_SCHEME  URI スキーム"
+
+msgid "  IPPFIND_SERVICE_URI     URI"
+msgstr "  IPPFIND_SERVICE_URI     URI"
+
+msgid "  IPPFIND_TXT_*           Value of TXT record key"
+msgstr "  IPPFIND_TXT_*           TXT レコードキーの値"
+
+msgid ""
+"  expression --and expression\n"
+"                          Logical AND."
+msgstr "  <式> --and <式>         論理 AND。"
+
+msgid ""
+"  expression --or expression\n"
+"                          Logical OR."
+msgstr "  <式> --or <式>          論理 OR。"
+
+msgid "  expression expression   Logical AND."
+msgstr "  <式> <式>               論理 AND。"
+
+msgid "  {service_domain}        Domain name"
+msgstr "  {service_domain}        ドメイン名"
+
+msgid "  {service_hostname}      Fully-qualified domain name"
+msgstr "  {service_hostname}      完全修飾ドメイン名 (FQDN)"
+
+msgid "  {service_name}          Service instance name"
+msgstr "  {service_name}          サービスインスタンス名"
+
+msgid "  {service_port}          Port number"
+msgstr "  {service_port}          ポート番号"
+
+msgid "  {service_regtype}       DNS-SD registration type"
+msgstr "  {service_regtype}       DNS-SD 登録タイプ"
+
+msgid "  {service_scheme}        URI scheme"
+msgstr "  {service_scheme}        URI スキーム"
+
+msgid "  {service_uri}           URI"
+msgstr "  {service_uri}           URI"
+
+msgid "  {txt_*}                 Value of TXT record key"
+msgstr "  {txt_*}                 TXT レコードキーの値"
+
+msgid "  {}                      URI"
+msgstr "  {}                      URI"
 
 msgid " FAIL"
 msgstr " 失敗"
@@ -1157,12 +1389,236 @@ msgid " PASS"
 msgstr " 合格"
 
 #, c-format
-msgid "%-6s %-10.10s %-4d %-10d %-27.27s %.0f bytes"
-msgstr "%-6s %-10.10s %-4d %-10d %-27.27s %.0f バイト"
+msgid "\"%s\": Bad URI value \"%s\" - %s (RFC 2911 section 4.1.5)."
+msgstr "\"%s\": URI の値 \"%s\" が誤っています - %s (RFC 2911 4.1.5 節)。"
+
+#, c-format
+msgid "\"%s\": Bad URI value \"%s\" - bad length %d (RFC 2911 section 4.1.5)."
+msgstr ""
+"\"%s\": URI の値 \"%s\" が誤っています - 長さの誤り %d (RFC 2911 4.1.5 節)。"
+
+#, c-format
+msgid "\"%s\": Bad attribute name - bad length %d (RFC 2911 section 4.1.3)."
+msgstr "\"%s\": 属性名が誤っています - 長さの誤り %d (RFC 2911 4.1.3 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad attribute name - invalid character (RFC 2911 section 4.1.3)."
+msgstr "\"%s\": 属性名が誤っています - 不正な文字 (RFC 2911 4.1.3 節)。"
+
+#, c-format
+msgid "\"%s\": Bad boolen value %d (RFC 2911 section 4.1.11)."
+msgstr "\"%s\": 真偽値 %d が誤っています (RFC 2911 4.1.11 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad charset value \"%s\" - bad characters (RFC 2911 section 4.1.7)."
+msgstr ""
+"\"%s\": charset の値 \"%s\" が誤っています - 不正な文字 (RFC 2911 4.1.7 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad charset value \"%s\" - bad length %d (RFC 2911 section 4.1.7)."
+msgstr ""
+"\"%s\": charset の値 \"%s\" が誤っています - 不正な長さ %d (RFC 2911 section "
+"4.1.7)."
+
+#, c-format
+msgid "\"%s\": Bad dateTime UTC hours %u (RFC 2911 section 4.1.14)."
+msgstr ""
+"\"%s\": dateTime UTC の時間指定 %u が誤っています (RFC 2911 4.1.14 節)."
+
+#, c-format
+msgid "\"%s\": Bad dateTime UTC minutes %u (RFC 2911 section 4.1.14)."
+msgstr "\"%s\": dateTime UTC の分指定 %u が誤っています (RFC 2911 4.1.14 節)。"
+
+#, c-format
+msgid "\"%s\": Bad dateTime UTC sign '%c' (RFC 2911 section 4.1.14)."
+msgstr ""
+"\"%s\": dateTime UTC の符号指定 '%c' が誤っています (RFC 2911 4.1.14 節)。"
+
+#, c-format
+msgid "\"%s\": Bad dateTime day %u (RFC 2911 section 4.1.14)."
+msgstr "\"%s\": dateTime の日付指定 %u が誤っています (RFC 2911 4.1.14 節)."
+
+#, c-format
+msgid "\"%s\": Bad dateTime deciseconds %u (RFC 2911 section 4.1.14)."
+msgstr ""
+"\"%s\": dateTime の 0.1 秒の指定 %u が誤っています (RFC 2911 4.1.14 節)。"
+
+#, c-format
+msgid "\"%s\": Bad dateTime hours %u (RFC 2911 section 4.1.14)."
+msgstr "\"%s\": dateTime の時間指定 %u が誤っています (RFC 2911 4.1.14 節)。"
+
+#, c-format
+msgid "\"%s\": Bad dateTime minutes %u (RFC 2911 section 4.1.14)."
+msgstr "\"%s\": dateTime の分指定が誤っています %u (RFC 2911 4.1.14 節)。"
+
+#, c-format
+msgid "\"%s\": Bad dateTime month %u (RFC 2911 section 4.1.14)."
+msgstr "\"%s\": dateTime の月指定 %u が誤っています (RFC 2911 4.1.14 節)。"
+
+#, c-format
+msgid "\"%s\": Bad dateTime seconds %u (RFC 2911 section 4.1.14)."
+msgstr "\"%s\": 日時の秒指定 %u が誤っています (RFC 2911 4.1.14 節)。"
+
+#, c-format
+msgid "\"%s\": Bad enum value %d - out of range (RFC 2911 section 4.1.4)."
+msgstr "\"%s\": enum の値 %d が誤っています - 範囲外の値 (RFC 2911 4.1.4 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad keyword value \"%s\" - bad length %d (RFC 2911 section 4.1.3)."
+msgstr ""
+"\"%s\": keyword の値 \"%s\" が誤っています -  %d (RFC 2911 section 4.1.3)."
+
+#, c-format
+msgid ""
+"\"%s\": Bad keyword value \"%s\" - invalid character (RFC 2911 section "
+"4.1.3)."
+msgstr ""
+"\"%s\": keyword の値 \"%s\" が誤っています - 不正な文字 (RFC 2911 4.1.3 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad mimeMediaType value \"%s\" - bad characters (RFC 2911 section "
+"4.1.9)."
+msgstr ""
+"\"%s\": mimeMediaType の値 \"%s\" が誤っています - 誤った文字 (RFC 2911 "
+"4.1.9 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad mimeMediaType value \"%s\" - bad length %d (RFC 2911 section "
+"4.1.9)."
+msgstr ""
+"\"%s\": mimeMediaType の値 \"%s\" が誤っています - 長さの誤り %d (RFC 2911 "
+"4.1.9 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad name value \"%s\" - bad UTF-8 sequence (RFC 2911 section 4.1.2)."
+msgstr ""
+"\"%s\": name の値 \"%s\" が誤っています - UTF-8 として誤った並び (RFC 2911 "
+"4.1.2 節)。"
+
+#, c-format
+msgid "\"%s\": Bad name value \"%s\" - bad length %d (RFC 2911 section 4.1.2)."
+msgstr ""
+"\"%s\": name の値 \"%s\" が誤っています - 誤った長さ %d (RFC 2911 section "
+"4.1.2)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad naturalLanguage value \"%s\" - bad characters (RFC 2911 section "
+"4.1.8)."
+msgstr ""
+"\"%s\": naturalLanguage の値 \"%s\" が誤っています - 誤った文字 (RFC 2911 "
+"4.1.8 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad naturalLanguage value \"%s\" - bad length %d (RFC 2911 section "
+"4.1.8)."
+msgstr ""
+"\"%s\": naturalLanguage の値 \"%s\" が誤っています - 誤った長さ %d (RFC 2911 "
+"4.1.8 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad octetString value - bad length %d (RFC 2911 section 4.1.10)."
+msgstr ""
+"\"%s\": octetString 値が誤っています - 誤った長さ %d (RFC 2911 4.1.10 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad rangeOfInteger value %d-%d - lower greater than upper (RFC 2911 "
+"section 4.1.13)."
+msgstr ""
+"\"%s\": rangeOfInteger の値 %d-%d が誤っています  - 下限が上限よりも大きい "
+"(RFC 2911 4.1.13 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad resolution value %dx%d%s - bad units value (RFC 2911 section "
+"4.1.15)."
+msgstr ""
+"\"%s\": resolution の値 %dx%d%s が誤っています - 単位値の誤り (RFC 2911 "
+"4.1.15 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad resolution value %dx%d%s - cross feed resolution must be "
+"positive (RFC 2911 section 4.1.15)."
+msgstr ""
+"\"%s\": resolution の値 %dx%d%s が誤っています - 主走査解像度が負 (RFC 2911 "
+"4.1.15 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad resolution value %dx%d%s - feed resolution must be positive (RFC "
+"2911 section 4.1.15)."
+msgstr ""
+"\"%s\": resolution の値 %dx%d%s が誤っています - 副走査解像度が負 (RFC 2911 "
+"4.1.15 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad text value \"%s\" - bad UTF-8 sequence (RFC 2911 section 4.1.1)."
+msgstr ""
+"\"%s\": text の値 \"%s\" が誤っています - UTF-8 として誤った並び (RFC 2911 "
+"4.1.1 節)。"
+
+#, c-format
+msgid "\"%s\": Bad text value \"%s\" - bad length %d (RFC 2911 section 4.1.1)."
+msgstr ""
+"\"%s\": text の値 \"%s\" が誤っています - 不正な長さ %d (RFC 2911 4.1.1 節)。"
+
+#, c-format
+msgid ""
+"\"%s\": Bad uriScheme value \"%s\" - bad characters (RFC 2911 section 4.1.6)."
+msgstr ""
+"\"%s\": uriScheme の値 \"%s\" が誤っています - 誤った文字 (RFC 2911 4.1.6 "
+"節)."
+
+#, c-format
+msgid ""
+"\"%s\": Bad uriScheme value \"%s\" - bad length %d (RFC 2911 section 4.1.6)."
+msgstr ""
+"\"%s\": uriScheme の値 \"%s\" が誤っています - 不正な長さ %d (RFC 2911 4.1.6 "
+"節)."
 
 #, c-format
 msgid "%-7s %-7.7s %-7d %-31.31s %.0f bytes"
 msgstr "%-7s %-7.7s %-7d %-31.31s %.0f バイト"
+
+#, c-format
+msgid "%d x %d mm"
+msgstr "%d x %d mm"
+
+#, c-format
+msgid "%g x %g"
+msgstr "%g x %g"
+
+#, c-format
+msgid "%s (%s)"
+msgstr "%s (%s)"
+
+#, c-format
+msgid "%s (%s, %s)"
+msgstr "%s (%s, %s)"
+
+#, c-format
+msgid "%s (Borderless)"
+msgstr "%s (ふちなし)"
+
+#, c-format
+msgid "%s (Borderless, %s)"
+msgstr "%s (ふちなし, %s)"
+
+#, c-format
+msgid "%s (Borderless, %s, %s)"
+msgstr "%s (ふちなし, %s, %s)"
 
 #, c-format
 msgid "%s accepting requests since %s"
@@ -1222,6 +1678,14 @@ msgid "%s: %s failed: %s"
 msgstr "%s: %s に失敗しました: %s"
 
 #, c-format
+msgid "%s: Bad printer URI \"%s\"."
+msgstr ""
+
+#, c-format
+msgid "%s: Bad version %s for \"-V\"."
+msgstr "%s: -V オプションにおいて %s は不正なバージョンです。"
+
+#, c-format
 msgid "%s: Don't know what to do."
 msgstr "%s: 何が起きているか不明です。"
 
@@ -1232,7 +1696,7 @@ msgstr "%s: エラー - 環境変数 %s が存在しない宛先 \"%s\" を指�
 
 #, c-format
 msgid "%s: Error - add '/version=1.1' to server name."
-msgstr ""
+msgstr "%s: エラー - '/version=1.1' をサーバー名に付与してください。"
 
 #, c-format
 msgid "%s: Error - bad job ID."
@@ -1268,10 +1732,6 @@ msgstr "%s: エラー - \"-n\" オプションのあとにはコピー数が必�
 #, c-format
 msgid "%s: Error - expected destination after \"-P\" option."
 msgstr "%s: エラー - \"-P\" オプションのあとには宛先が必要です。"
-
-#, c-format
-msgid "%s: Error - expected destination after \"-b\" option."
-msgstr "%s: エラー - \"-b\" オプションのあとに宛先が必要です。"
 
 #, c-format
 msgid "%s: Error - expected destination after \"-d\" option."
@@ -1394,6 +1854,18 @@ msgid "%s: Invalid filter string \"%s\"."
 msgstr "%s: 無効なフィルター文字列です \"%s\""
 
 #, c-format
+msgid "%s: Missing filename for \"-P\"."
+msgstr "%s: \"-P\" にファイル名がありません。"
+
+#, c-format
+msgid "%s: Missing timeout for \"-T\"."
+msgstr "%s: \"-T\" オプションにタイムアウトが設定されていません。"
+
+#, c-format
+msgid "%s: Missing version for \"-V\"."
+msgstr "%s: \"-V\" オプションにバージョンの指定がありません。"
+
+#, c-format
 msgid "%s: Need job ID (\"-i jobid\") before \"-H restart\"."
 msgstr "%s: '-H restart' の前にはジョブ ID ('-i ジョブID') が必要です。"
 
@@ -1410,6 +1882,10 @@ msgid "%s: Sorry, no encryption support."
 msgstr "%s: 残念ながら、暗号化サポートはコンパイル時に組み込まれていません。"
 
 #, c-format
+msgid "%s: Unable to connect to \"%s:%d\": %s"
+msgstr ""
+
+#, c-format
 msgid "%s: Unable to connect to server."
 msgstr "%s: サーバーに接続できません"
 
@@ -1418,8 +1894,16 @@ msgid "%s: Unable to contact server."
 msgstr "%s: サーバーに連絡できません。"
 
 #, c-format
+msgid "%s: Unable to create PPD file: %s"
+msgstr ""
+
+#, c-format
 msgid "%s: Unable to determine MIME type of \"%s\"."
 msgstr "%s: \"%s\" の MIME タイプを判別できません。"
+
+#, c-format
+msgid "%s: Unable to open \"%s\": %s"
+msgstr "%s: \"%s\" を開けません: %s"
 
 #, c-format
 msgid "%s: Unable to open %s: %s"
@@ -1435,6 +1919,10 @@ msgstr ""
 "%s: \"%s\" または \"%s\" から MIME データベースを読み取ることができません。"
 
 #, c-format
+msgid "%s: Unable to resolve \"%s\"."
+msgstr ""
+
+#, c-format
 msgid "%s: Unknown destination \"%s\"."
 msgstr "%s: \"%s\" は未知の宛先です。"
 
@@ -1445,6 +1933,14 @@ msgstr "%s: %s/%s は未知の宛先 MIME タイプです。"
 #, c-format
 msgid "%s: Unknown option \"%c\"."
 msgstr "%s: '%c' は未知のオプションです。"
+
+#, c-format
+msgid "%s: Unknown option \"%s\"."
+msgstr "%s: \"%s\" は未知のオプションです。"
+
+#, c-format
+msgid "%s: Unknown option \"-%c\"."
+msgstr "%s: \"-%c\" は未知のオプションです。"
 
 #, c-format
 msgid "%s: Unknown source MIME type %s/%s."
@@ -2002,9 +2498,6 @@ msgstr "7 x 9 インチ"
 msgid "70"
 msgstr "70"
 
-msgid "720dpi"
-msgstr "720dpi"
-
 msgid "75"
 msgstr "75"
 
@@ -2265,7 +2758,7 @@ msgstr "B9"
 
 #, c-format
 msgid "Bad 'document-format' value \"%s\"."
-msgstr ""
+msgstr "誤った 'document-format' の値です \"%s\"。"
 
 msgid "Bad NULL dests pointer"
 msgstr "不正な NULL 送信先ポインター"
@@ -2290,6 +2783,9 @@ msgstr "不正な SNMP バージョン番号"
 
 msgid "Bad UIConstraints"
 msgstr "不正な UIConstraints"
+
+msgid "Bad arguments to function"
+msgstr "関数の引数が不正"
 
 #, c-format
 msgid "Bad copies value %d."
@@ -2317,14 +2813,15 @@ msgstr "\"%s\" は不正な document-format-default です。"
 msgid "Bad filename buffer"
 msgstr "不正なファイル名バッファーです。"
 
-msgid "Bad job-name value: Bad UTF-8 sequence."
-msgstr ""
+msgid "Bad hostname/address in URI"
+msgstr "URI のホスト名/アドレスが不正"
 
-msgid "Bad job-name value: Name too long."
-msgstr ""
+#, c-format
+msgid "Bad job-name value: %s"
+msgstr "誤った job-name 値: %s"
 
 msgid "Bad job-name value: Wrong type or count."
-msgstr ""
+msgstr "誤った job-name 値: 型かカウントが誤っています。"
 
 msgid "Bad job-priority value."
 msgstr "不正な job-priority 値です。"
@@ -2363,16 +2860,19 @@ msgstr "%d 行に不正なオプションと選択があります。"
 msgid "Bad page-ranges values %d-%d."
 msgstr "%d-%d は不正な page-ranges 値です。"
 
+msgid "Bad port number in URI"
+msgstr "URI のポート番号が不正"
+
 #, c-format
 msgid "Bad port-monitor \"%s\"."
 msgstr "\"%s\" は無効な port-monitor です。"
 
-msgid "Bad printer URI."
-msgstr "不正なプリンター URI です。"
-
 #, c-format
 msgid "Bad printer-state value %d."
 msgstr "%d は無効な printer-state 値です。"
+
+msgid "Bad printer-uri."
+msgstr "printer-uri が不正です。"
 
 #, c-format
 msgid "Bad request ID %d."
@@ -2382,11 +2882,23 @@ msgstr "%d は無効なリクエストIDです。"
 msgid "Bad request version number %d.%d."
 msgstr "バージョン番号 %d.%d は無効なリクエストです。"
 
+msgid "Bad resource in URI"
+msgstr "URI のリソースが不正"
+
+msgid "Bad scheme in URI"
+msgstr "URI のスキームが不正"
+
 msgid "Bad subscription ID"
-msgstr "不正なサブスクリプション ID です。"
+msgstr "不正なサブスクリプション ID"
+
+msgid "Bad username in URI"
+msgstr "URI のユーザー名が不正"
 
 msgid "Bad value string"
 msgstr "値文字列がありません"
+
+msgid "Bad/empty URI"
+msgstr "URI が不正か空"
 
 msgid "Banners"
 msgstr "バナー"
@@ -2406,6 +2918,9 @@ msgstr "CMYK"
 
 msgid "CPCL Label Printer"
 msgstr "CPCL ラベルプリンター"
+
+msgid "Cancel Jobs"
+msgstr "ジョブをキャンセル"
 
 msgid "Cancel RSS Subscription"
 msgstr "RSS 購読をキャンセル"
@@ -2496,7 +3011,7 @@ msgid "Darkness"
 msgstr "濃さ"
 
 msgid "Data file sent successfully."
-msgstr "データファイルが正常に送信されました"
+msgstr "データファイルが正常に送信されました。"
 
 msgid "Delete Class"
 msgstr "クラスの削除"
@@ -2578,21 +3093,15 @@ msgstr "設定ファイルの編集"
 msgid "Empty PPD file."
 msgstr "PPD ファイルが空です。"
 
+msgid "Encryption is not supported."
+msgstr "暗号化はサポートされていません。"
+
 #. TRANSLATORS: Banner/cover sheet after the print job.
 msgid "Ending Banner"
 msgstr "終了バナー"
 
 msgid "English"
 msgstr "English"
-
-msgid "Enter old password:"
-msgstr "古いパスワードを入力:"
-
-msgid "Enter password again:"
-msgstr "パスワードを再度入力:"
-
-msgid "Enter password:"
-msgstr "パスワードを入力:"
 
 msgid ""
 "Enter your username and password or the root username and password to access "
@@ -2762,11 +3271,17 @@ msgstr "封筒 洋形4号"
 msgid "Envelope You4 Long Edge"
 msgstr "封筒 洋形4号 長辺送り"
 
+msgid "Environment Variables:"
+msgstr "環境変数:"
+
 msgid "Epson"
 msgstr "Epson"
 
 msgid "Error Policy"
 msgstr "エラーポリシー"
+
+msgid "Error reading raster data."
+msgstr ""
 
 msgid "Error sending raster data."
 msgstr "ラスターデータの送信でエラーが起きました。"
@@ -2812,6 +3327,9 @@ msgstr "予測に失敗しました"
 
 msgid "Export Printers to Samba"
 msgstr "Samba へプリンターをエクスポート"
+
+msgid "Expressions:"
+msgstr "式:"
 
 msgid "FAIL"
 msgstr "失敗"
@@ -2928,6 +3446,9 @@ msgstr "IPP の整数値は想定された 4 バイトになっていません�
 msgid "IPP language length overflows value."
 msgstr "IPP の language length の値がオーバーフローしています。"
 
+msgid "IPP language length too large."
+msgstr "IPP の language の長さが長すぎます。"
+
 msgid "IPP member name is not empty."
 msgstr "IPP のメンバー名が空ではありません。"
 
@@ -2935,13 +3456,16 @@ msgid "IPP memberName value is empty."
 msgstr "IPP の memberName の値が空です。"
 
 msgid "IPP memberName with no attribute."
-msgstr ""
+msgstr "IPP の memberName に属性がありません。"
 
 msgid "IPP name larger than 32767 bytes."
 msgstr "IPP 名が 32767 バイトより大きいです。"
 
 msgid "IPP nameWithLanguage value less than minimum 4 bytes."
 msgstr "IPP の nameWithLanguage が最小値 4 バイト未満です。"
+
+msgid "IPP octetString length too large."
+msgstr "IPP の octetString の長さが大きすぎます。"
 
 msgid "IPP rangeOfInteger value not 8 bytes."
 msgstr "IPP の rangeOfInteger は想定された 8 バイトになっていません。"
@@ -3002,6 +3526,9 @@ msgstr "Internet Postage 3-Part"
 
 msgid "Internet Printing Protocol"
 msgstr "インターネット印刷プロトコル"
+
+msgid "Invalid media name arguments."
+msgstr "無効なメディア名引数です。"
 
 msgid "Invalid media size."
 msgstr "無効なメディアサイズです。"
@@ -3150,13 +3677,16 @@ msgid "Line longer than the maximum allowed (255 characters)"
 msgstr "1 行が最大値 (255 文字) を超えています"
 
 msgid "List Available Printers"
-msgstr "使用可能なプリンターをリスト化"
+msgstr "使用可能なプリンター一覧"
+
+msgid "Load paper."
+msgstr "用紙を補給してください。"
 
 msgid "Long-Edge (Portrait)"
 msgstr "長辺給紙 (縦向き)"
 
-msgid "Looking for printer."
-msgstr "プリンターを探しています。"
+msgid "Looking for printer..."
+msgstr ""
 
 msgid "Manual Feed"
 msgstr "手差し"
@@ -3219,6 +3749,12 @@ msgstr "requesting-user-name 属性が設定されていません。"
 msgid "Missing required attributes."
 msgstr "必須の属性が設定されていません。"
 
+msgid "Missing resource in URI"
+msgstr "URI のリソースがない"
+
+msgid "Missing scheme in URI"
+msgstr "URI のスキームがない"
+
 #, c-format
 msgid "Missing value on line %d."
 msgstr "%d 行に値がありません。"
@@ -3243,6 +3779,9 @@ msgstr ""
 "        言語 = %s\n"
 "        プリンタードライバー = %s\n"
 "        デバイス ID = %s"
+
+msgid "Modifiers:"
+msgstr "修飾子:"
 
 msgid "Modify Class"
 msgstr "クラスの変更"
@@ -3271,12 +3810,6 @@ msgstr "入れ子になったクラスは許可されていません。"
 msgid "Never"
 msgstr "Never"
 
-msgid "New Stylus Color Series"
-msgstr "New Stylus Color シリーズ"
-
-msgid "New Stylus Photo Series"
-msgstr "New Stylus Photo シリーズ"
-
 msgid "No"
 msgstr "いいえ"
 
@@ -3295,6 +3828,9 @@ msgstr "Windows プリンタードライバーがインストールされてい�
 msgid "No active connection"
 msgstr "アクティブな接続はありません"
 
+msgid "No active connection."
+msgstr "アクティブな接続はありません。"
+
 #, c-format
 msgid "No active jobs on %s."
 msgstr "%s にはアクティブなジョブはありません。"
@@ -3309,14 +3845,13 @@ msgid "No community name"
 msgstr "コミュニティ名がありません"
 
 msgid "No default printer."
-msgstr "デフォルトのプリンターはありません"
+msgstr "デフォルトのプリンターはありません。"
 
 msgid "No destinations added."
-msgstr "追加された宛先はありません"
+msgstr "追加された宛先はありません。"
 
 msgid "No device URI found in argv[0] or in DEVICE_URI environment variable."
-msgstr ""
-"ERROR: argv[0] または 環境変数 DEVICE_URI にデバイス URI が見つかりません。"
+msgstr "argv[0] または 環境変数 DEVICE_URI にデバイス URI が見つかりません。"
 
 msgid "No error-index"
 msgstr "エラーインデックスがありません"
@@ -3328,25 +3863,34 @@ msgid "No file in print request."
 msgstr "印刷リクエストにファイルがありません。"
 
 msgid "No modification time"
-msgstr "変更時刻がありません。"
+msgstr "変更時刻がありません"
 
 msgid "No name OID"
 msgstr "OID 名がありません"
 
 msgid "No pages were found."
-msgstr "ERROR: ページが見つかりません。"
+msgstr " ページが見つかりません。"
 
 msgid "No printer name"
-msgstr "プリンター名がありません。"
+msgstr "プリンター名がありません"
 
 msgid "No printer-uri found"
-msgstr "プリンター URI が見つかりません。"
+msgstr "プリンター URI が見つかりません"
 
 msgid "No printer-uri found for class"
-msgstr "クラスのプリンター URI が見つかりません。"
+msgstr "クラスのプリンター URI が見つかりません"
 
 msgid "No printer-uri in request."
 msgstr "プリンター URI のリクエストがありません。"
+
+msgid "No request URI."
+msgstr "リクエスト URI がありません。"
+
+msgid "No request protocol version."
+msgstr "リクエストプロトコルバージョンがありません。"
+
+msgid "No request sent."
+msgstr "リクエストが送られませんでした。"
 
 msgid "No request-id"
 msgstr "リクエストID がありません"
@@ -3444,21 +3988,14 @@ msgstr "メモリーが足りません。"
 msgid "Output Mode"
 msgstr "出力モード"
 
-#, c-format
-msgid "Output for printer %s is sent to %s"
-msgstr "プリンター %s の出力は %s に送られます"
+msgid "Output bin is almost full."
+msgstr "排紙ビンがほとんど満杯です。"
 
-#, c-format
-msgid "Output for printer %s is sent to remote printer %s on %s"
-msgstr "プリンター %s の出力は、リモートプリンター %s (%s 上) に送られます"
+msgid "Output bin is full."
+msgstr "排紙ビンが満杯です。"
 
-#, c-format
-msgid "Output for printer %s/%s is sent to %s"
-msgstr "プリンター %s/%s の出力は %s に送られます"
-
-#, c-format
-msgid "Output for printer %s/%s is sent to remote printer %s on %s"
-msgstr "プリンター %s/%s の出力は、リモートプリンター %s (%s 上) に送られます"
+msgid "Output bin is missing."
+msgstr "排紙ビンがありません。"
 
 msgid "PASS"
 msgstr "合格"
@@ -3489,6 +4026,18 @@ msgstr "パケットが Get-Response-PDU を含んでいません"
 
 msgid "Packet does not start with SEQUENCE"
 msgstr "パケットが SEQUENCE から始まりません"
+
+msgid "Paper jam."
+msgstr "用紙詰まりです。"
+
+msgid "Paper tray is almost empty."
+msgstr "給紙トレイがほとんど空です。"
+
+msgid "Paper tray is empty."
+msgstr "給紙トレイが空です。"
+
+msgid "Paper tray is missing."
+msgstr "給紙トレイがありません。"
 
 msgid "ParamCustominCutInterval"
 msgstr "ParamCustominCutInterval"
@@ -3543,6 +4092,9 @@ msgstr "往復ハガキ 長辺送り"
 msgid "Postcard Long Edge"
 msgstr "ハガキ 長辺送り"
 
+msgid "Preparing to print."
+msgstr "印刷準備中です。"
+
 msgid "Print Density"
 msgstr "印刷密度"
 
@@ -3570,24 +4122,17 @@ msgstr "プリントしてカット"
 msgid "Print and Tear"
 msgstr "プリントして切り取る"
 
-#, c-format
-msgid "Print file accepted - job ID %d."
-msgstr "プリントファイルを受け付けました - ジョブ ID %d。"
-
-msgid "Print file accepted - job ID unknown."
-msgstr "NOTICE: プリントファイルを受け付けました - ジョブ ID 不明。"
-
 msgid "Print file sent."
 msgstr "プリントファイルが送られました。"
-
-msgid "Print file was not accepted."
-msgstr "プリントファイルが受け付けられませんでした。"
 
 msgid "Print job canceled at printer."
 msgstr "印刷ジョブはプリンターでキャンセルされました。"
 
 msgid "Print job too large."
 msgstr "印刷ジョブが大きすぎます。"
+
+msgid "Print job was not accepted."
+msgstr "印刷ジョブが受け付けられませんでした。"
 
 msgid "Printer Added"
 msgstr "追加されたプリンター"
@@ -3610,6 +4155,9 @@ msgstr "プリンター設定"
 msgid "Printer cannot print supplied content."
 msgstr "プリンターは受信した内容を印刷できませんでした。"
 
+msgid "Printer cannot print with supplied options."
+msgstr "指定されたオプションではプリンターは印刷できません。"
+
 msgid "Printer:"
 msgstr "プリンター:"
 
@@ -3617,11 +4165,8 @@ msgid "Printers"
 msgstr "プリンター"
 
 #, c-format
-msgid "Printing page %d, %d%% complete."
-msgstr "ページ %d を印刷中、%d%% 完了しました。"
-
-msgid "Purge Jobs"
-msgstr "ジョブの削除"
+msgid "Printing page %d, %u%% complete."
+msgstr "ページ %d, %u%% の印刷が完了しました。"
 
 msgid "Quarto"
 msgstr "Quarto"
@@ -3631,12 +4176,6 @@ msgstr "クォータの制限に達しました。"
 
 msgid "Rank    Owner   Job     File(s)                         Total Size"
 msgstr "ランク  所有者  ジョブ  ファイル                        合計サイズ"
-
-#. TRANSLATORS: Pri is job priority.
-msgid ""
-"Rank   Owner      Pri  Job        Files                       Total Size"
-msgstr ""
-"ランク 所有者     優先 ジョブ     ファイル                    合計サイズ"
 
 msgid "Reject Jobs"
 msgstr "ジョブの拒否"
@@ -3698,6 +4237,9 @@ msgstr "開始されたサーバー"
 msgid "Server Stopped"
 msgstr "停止されたサーバー"
 
+msgid "Server credentials not set."
+msgstr "サーバー証明書が設定されていません。"
+
 msgid "Service Unavailable"
 msgstr "利用できないサービス"
 
@@ -3743,15 +4285,12 @@ msgstr "ページ %d を開始しています。"
 msgid "Statement"
 msgstr "記述"
 
-msgid "Stylus Color Series"
-msgstr "Stylus Color シリーズ"
-
-msgid "Stylus Photo Series"
-msgstr "Stylus Photo シリーズ"
-
 #, c-format
 msgid "Subscription #%d does not exist."
 msgstr "サブスクリプション番号 %d は存在しません。"
+
+msgid "Substitutions:"
+msgstr "置換:"
 
 msgid "Super A"
 msgstr "スーパー A"
@@ -3784,13 +4323,16 @@ msgid "Tear-Off Adjust Position"
 msgstr "Tear-Off 位置調節"
 
 #, c-format
+msgid "The \"%s\" attribute is required for print jobs."
+msgstr "印刷ジョブに \"%s\" 属性が必要です。"
+
+#, c-format
 msgid "The %s attribute cannot be provided with job-ids."
 msgstr "%s 属性は、ジョブ ID と一緒に使うことはできません。"
 
 #, c-format
 msgid ""
-"The '%s' Job Description attribute cannot be supplied in a job creation "
-"request."
+"The '%s' Job Status attribute cannot be supplied in a job creation request."
 msgstr ""
 
 #, c-format
@@ -3813,8 +4355,8 @@ msgid ""
 "The class name may only contain up to 127 printable characters and may not "
 "contain spaces, slashes (/), or the pound sign (#)."
 msgstr ""
-"クラス名は 127 文字以内の表示可能文字からなり、空白、スラッシュ (/)、シャー"
-"プ (#) を含んではなりません。"
+"クラス名は 127 文字以内の表示可能文字からなり、空白、スラッシュ (/)、ハッ"
+"シュ (#) を含んではなりません。"
 
 msgid "The developer unit needs to be replaced."
 msgstr "現像ユニットの交換が必要です。"
@@ -3844,39 +4386,20 @@ msgstr "感光体の交換が必要です。"
 msgid "The optical photoconductor will need to be replaced soon."
 msgstr "もうすぐ感光体の交換時期です。"
 
-msgid "The output bin is almost full."
-msgstr "排紙トレイがほとんど一杯です。"
-
-msgid "The output bin is full."
-msgstr "排紙トレイが一杯です。"
-
-msgid "The output bin is missing."
-msgstr "排紙トレイが見つかりません。"
-
-msgid "The paper tray is almost empty."
-msgstr "用紙トレイが空になりかけています。"
-
-msgid "The paper tray is empty."
-msgstr "用紙トレイが空です。"
-
-msgid "The paper tray is missing."
-msgstr "用紙トレイが見つかりません。"
-
-msgid "The paper tray needs to be filled."
-msgstr "用紙トレイに補充が必要です。"
-
-msgid "The printer URI is incorrect or no longer exists."
-msgstr "プリンター URI が誤っているか、もう存在しません。"
+msgid "The printer configuration is incorrect or the printer no longer exists."
+msgstr "プリンターの設定が正しくないかプリンターはすでに存在しません。"
 
 msgid "The printer did not respond."
 msgstr "プリンターが応答しません。"
 
-#, c-format
-msgid "The printer does not support IPP/%d.%d, trying IPP/%s."
-msgstr "プリンターが IPP/%d.%d をサポートしていません。IPP/%s を試します。"
-
 msgid "The printer is in use."
 msgstr "プリンターは使用中です。"
+
+msgid "The printer is low on ink."
+msgstr "インク残量が残り少なくなっています。"
+
+msgid "The printer is low on toner."
+msgstr "トナー残量が残り少なくなっています。"
 
 msgid "The printer is not connected."
 msgstr "プリンターは接続されていません。"
@@ -3892,12 +4415,6 @@ msgstr "プリンターは現在オンラインです。"
 
 msgid "The printer is offline."
 msgstr "プリンターはオフラインです。"
-
-msgid "The printer is running low on ink."
-msgstr "プリンターのインクがもうすぐなくなります。"
-
-msgid "The printer is running low on toner."
-msgstr "プリンターのトナーがもうすぐなくなります。"
 
 msgid "The printer is unreachable at this time."
 msgstr "プリンターには現在到達できません。"
@@ -3915,8 +4432,8 @@ msgid ""
 "The printer name may only contain up to 127 printable characters and may not "
 "contain spaces, slashes (/), or the pound sign (#)."
 msgstr ""
-"プリンター名は 127 文字以内の表示可能文字から成り、空白、スラッシュ (/)、ポン"
-"ド記号 (#) を含んではなりません。"
+"プリンター名は 127 文字以内の表示可能文字から成り、空白、スラッシュ (/)、ハッ"
+"シュ (#) を含んではなりません。"
 
 msgid "The printer or class does not exist."
 msgstr "プリンターまたはクラスは存在しません。"
@@ -3962,8 +4479,8 @@ msgid ""
 "The subscription name may not contain spaces, slashes (/), question marks "
 "(?), or the pound sign (#)."
 msgstr ""
-"サブスクリプション名には、スペース、スラッシュ (/)、疑問府 (?)、ポンド記号 "
-"(#) を使用しないでください。"
+"サブスクリプション名には、スペース、スラッシュ (/)、疑問府 (?)、ハッシュ (#) "
+"を使用しないでください。"
 
 msgid ""
 "The web interface is currently disabled. Run \"cupsctl WebInterface=yes\" to "
@@ -3978,9 +4495,6 @@ msgstr "which-jobs の値 \"%s\" はサポートされていません。"
 
 msgid "There are too many subscriptions."
 msgstr "サブスクリプションが多すぎます。"
-
-msgid "There is a paper jam."
-msgstr "用紙づまりが発生しています。"
 
 msgid "There was an unrecoverable USB error."
 msgstr "回復不可能な USB のエラーが発生しています。"
@@ -4020,6 +4534,9 @@ msgstr "トレイ 4"
 msgid "URI Too Long"
 msgstr "URI が長すぎます"
 
+msgid "URI too large"
+msgstr "URI が長すぎる"
+
 msgid "US Ledger"
 msgstr "US レジャー"
 
@@ -4051,7 +4568,7 @@ msgid "Unable to access help file."
 msgstr "ヘルプファイルにアクセスできません。"
 
 msgid "Unable to add RSS subscription"
-msgstr " RSS 購読を追加できません"
+msgstr "RSS 購読を追加できません"
 
 msgid "Unable to add class"
 msgstr "クラスを追加できません"
@@ -4089,6 +4606,14 @@ msgstr "printer-is-shared 属性を変更することができません"
 
 msgid "Unable to change server settings"
 msgstr "サーバーの設定を変更できません"
+
+#, c-format
+msgid "Unable to compile mimeMediaType regular expression: %s."
+msgstr "mimeMediaType の正規表現を解釈できませんでした: %s。"
+
+#, c-format
+msgid "Unable to compile naturalLanguage regular expression: %s."
+msgstr "naturalLanguage の正規表現を解釈できませんでした: %s。"
 
 msgid "Unable to configure printer options."
 msgstr "プリンターオプションを設定できません。"
@@ -4132,11 +4657,11 @@ msgstr ""
 msgid "Unable to copy interface script - %s"
 msgstr "インターフェイススクリプトをコピーできません - %s"
 
-msgid "Unable to create compressed print file"
-msgstr "圧縮プリントファイルを作成できません"
-
 msgid "Unable to create printer-uri"
-msgstr "printer-uri を作成できません。"
+msgstr "printer-uri を作成できません"
+
+msgid "Unable to create server credentials."
+msgstr "サーバー証明書を作成できません。"
 
 msgid "Unable to create temporary file"
 msgstr "テンポラリーファイルを作成できません"
@@ -4151,7 +4676,7 @@ msgid "Unable to do maintenance command"
 msgstr "メンテナンスコマンドを実行できません"
 
 msgid "Unable to edit cupsd.conf files larger than 1MB"
-msgstr "1MB 以上の cupsd.conf ファイルは編集できません。"
+msgstr "1MB 以上の cupsd.conf ファイルは編集できません"
 
 msgid ""
 "Unable to establish a secure connection to host (certificate chain invalid)."
@@ -4190,8 +4715,8 @@ msgstr "ジョブの宛先が見つかりません"
 msgid "Unable to find printer."
 msgstr "プリンターが見つかりません。"
 
-msgid "Unable to generate compressed print file"
-msgstr "圧縮プリントファイルを生成できません"
+msgid "Unable to find server credentials."
+msgstr "サーバー証明書を見つけられません。"
 
 msgid "Unable to get backend exit status."
 msgstr "バックエンドの終了ステータスを取得できません。"
@@ -4253,9 +4778,6 @@ msgstr "複数のジョブを移動できません"
 msgid "Unable to open PPD file"
 msgstr "PPD ファイルを読み込むことができません"
 
-msgid "Unable to open compressed print file"
-msgstr "圧縮プリントファイルを開けません"
-
 msgid "Unable to open cupsd.conf file:"
 msgstr "cupsd.conf ファイルを開けません:"
 
@@ -4281,8 +4803,11 @@ msgstr "テストページを印刷できません"
 msgid "Unable to read print data."
 msgstr "プリントデータを読み込めません。"
 
-msgid "Unable to resolve printer URI."
-msgstr "プリンター URI を解決できません。"
+msgid "Unable to rename job document file."
+msgstr ""
+
+msgid "Unable to resolve printer-uri."
+msgstr "printer-uri を解決できません。"
 
 #, c-format
 msgid "Unable to run \"%s\": %s"
@@ -4371,6 +4896,15 @@ msgstr "\"%s\" は未知の printer-error-policy です。"
 msgid "Unknown printer-op-policy \"%s\"."
 msgstr "\"%s\" は未知の printer-op-policy です。"
 
+msgid "Unknown request method."
+msgstr "未知のリクエスト方法です。"
+
+msgid "Unknown request version."
+msgstr "未知のリクエストバージョンです。"
+
+msgid "Unknown scheme in URI"
+msgstr "URI に未知のスキーマがあります"
+
 msgid "Unknown service name."
 msgstr "未知のサービス名です。"
 
@@ -4380,14 +4914,14 @@ msgstr "\"%s\" は未知のバージョンオプション値です。"
 
 #, c-format
 msgid "Unsupported 'compression' value \"%s\"."
-msgstr ""
+msgstr "\"%s\" はサポートされていない 'compression' の値です。"
 
 #, c-format
 msgid "Unsupported 'document-format' value \"%s\"."
-msgstr ""
+msgstr "\"%s\" はサポートされていない 'document-format' の値です。"
 
 msgid "Unsupported 'job-name' value."
-msgstr ""
+msgstr "サポートされていない 'job-name' の値です。"
 
 #, c-format
 msgid "Unsupported character set \"%s\"."
@@ -4473,17 +5007,39 @@ msgstr "Usage: cupsctl [オプション] [パラメータ=値 ... パラメー�
 msgid "Usage: cupsd [options]"
 msgstr "使い方: cupsd [オプション]"
 
-msgid "Usage: cupsfilter [ options ] filename"
-msgstr "使い方: cupsfilter [オプション] ファイル名"
+msgid "Usage: cupsfilter [ options ] [ -- ] filename"
+msgstr "使い方: cupsfilter [ オプション ] [ -- ] ファイル名"
 
 msgid "Usage: cupstestdsc [options] filename.ps [... filename.ps]"
-msgstr "使い方: cupstestdsc [オプション] filename.ps [... filename.ps]"
+msgstr "使い方: cupstestdsc [オプション] ファイル名.ps [... ファイル名.ps]"
 
 msgid ""
 "Usage: cupstestppd [options] filename1.ppd[.gz] [... filenameN.ppd[.gz]]"
 msgstr ""
 "使い方: cupstestppd [オプション] ファイル名1.ppd[.gz] [... ファイル名N.ppd[."
 "gz]]"
+
+msgid ""
+"Usage: ippdiscover [options] -a\n"
+"       ippdiscover [options] \"service name\"\n"
+"\n"
+"Options:"
+msgstr ""
+"使い方: ippdiscover [オプション] -a\n"
+"        ippdiscover [オプション] \"サービス名\"\n"
+"\n"
+"オプション:"
+
+msgid ""
+"Usage: ippfind [options] regtype[,subtype][.domain.] ... [expression]\n"
+"       ippfind [options] name[.regtype[.domain.]] ... [expression]\n"
+"       ippfind --help\n"
+"       ippfind --version"
+msgstr ""
+"使い方: ippfind [オプション] 登録タイプ[,サブタイプ][.ドメイン.] ... [式]\n"
+"        ippfind [オプション] 名前[.登録タイプ[.ドメイン.]] ... [式]\n"
+"        ippfind --help\n"
+"        ippfind --version"
 
 msgid "Usage: ipptool [options] URI filename [ ... filenameN ]"
 msgstr "使い方: ipptool [オプション] URI ファイル名 [ ... ファイル名N ]"
@@ -4501,18 +5057,6 @@ msgstr ""
 " 　     lpoptions [-h サーバー] [-E] [-p プリンター] -l\n"
 "        lpoptions [-h サーバー] [-E] -p プリンター -o オプション[=値] ...\n"
 "        lpoptions [-h サーバー] [-E] -x プリンター"
-
-msgid "Usage: lppasswd [-g groupname]"
-msgstr "使い方: lppasswd [-g グループ名]"
-
-msgid ""
-"Usage: lppasswd [-g groupname] [username]\n"
-"       lppasswd [-g groupname] -a [username]\n"
-"       lppasswd [-g groupname] -x [username]"
-msgstr ""
-"使い方: lppasswd [-g グループ名] [ユーザー名]\n"
-"        lppasswd [-g グループ名] -a [ユーザー名]\n"
-"        lppasswd [-g グループ名] -x [ユーザー名]"
 
 msgid ""
 "Usage: lpq [-P dest] [-U username] [-h hostname[:port]] [-l] [+interval]"
@@ -4538,7 +5082,7 @@ msgstr ""
 "drv ]"
 
 msgid "Usage: snmp [host-or-ip-address]"
-msgstr "使い方: snmp [ホストまたはIPアドレス]"
+msgstr "使い方: snmp [ホスト名またはIPアドレス]"
 
 msgid "Value uses indefinite length"
 msgstr "値は不定長です"
@@ -4574,13 +5118,6 @@ msgid ""
 msgstr ""
 "このページには URL <A HREF=\"https://%s:%d%s\">https://%s:%d%s</A> を使ってア"
 "クセスする必要があります。"
-
-msgid ""
-"Your password must be at least 6 characters long, cannot contain your "
-"username, and must contain at least one letter and number."
-msgstr ""
-"パスワードは少なくとも 6 文字以上で、あなたのユーザー名を含んではならず、少な"
-"くとも 1 つの英字および数値を含んでなければなりません。"
 
 msgid "ZPL Label Printer"
 msgstr "ZPL ラベルプリンター"
@@ -4627,15 +5164,21 @@ msgstr "cupsd: \"-c\" オプションのあとには設定ファイル名が必�
 
 msgid "cupsd: Expected cups-files.conf filename after \"-s\" option."
 msgstr ""
+"cupsd: cups-files.conf ファイル名は \"-s\" オプションの後ろにあるべきです。"
+
+msgid "cupsd: On-demand support not compiled in, running in normal mode."
+msgstr ""
+"cupsd: オンデマンドサポート有効でコンパイルされていません、標準モードで動作し"
+"ます。"
 
 msgid "cupsd: Relative cups-files.conf filename not allowed."
-msgstr ""
+msgstr "cupsd: 相対パスでの cups-files.conf の指定はできません。"
 
 msgid "cupsd: Unable to get current directory."
 msgstr "cupsd: カレントディレクトリーを取得できません。"
 
 msgid "cupsd: Unable to get path to cups-files.conf file."
-msgstr ""
+msgstr "cupsd: cups-files.conf ファイルへのパスが取得できません。"
 
 #, c-format
 msgid "cupsd: Unknown argument \"%s\" - aborting."
@@ -4644,11 +5187,6 @@ msgstr "cupsd: \"%s\" は未知の引数です - 停止します。"
 #, c-format
 msgid "cupsd: Unknown option \"%c\" - aborting."
 msgstr "cupsd: \"%c\" は未知のオプションです - 停止します。"
-
-msgid "cupsd: launchd(8) support not compiled in, running in normal mode."
-msgstr ""
-"cupsd: launchd(8) サポートがコンパイルされていないので、通常モードで動作しま"
-"す。"
 
 #, c-format
 msgid "cupsfilter: Invalid document number %d."
@@ -4694,16 +5232,89 @@ msgstr "help\t\tコマンドのヘルプを取得。"
 msgid "idle"
 msgstr "待機中"
 
-msgid "ipptool: \"-i\" and \"-n\" are incompatible with -X\"."
-msgstr "ipptool: \"-i\" と \"-n\" は \"-X\" と組み合わせられません。"
+#, c-format
+msgid "ippfind: Bad regular expression: %s"
+msgstr "ippfind: 不正な正規表現です: %s"
+
+msgid "ippfind: Cannot use --and after --or."
+msgstr "ippfind: --and は --or のあとに指定することはできません。"
+
+#, c-format
+msgid "ippfind: Expected key name after %s."
+msgstr "ippfind: %s のあとにはキー名が必要です。"
+
+#, c-format
+msgid "ippfind: Expected port range after %s."
+msgstr "ippfind: %s のあとにはポート範囲が必要です。"
+
+#, c-format
+msgid "ippfind: Expected program after %s."
+msgstr "ippfind: %s のあとにはプログラム名が必要です。"
+
+#, c-format
+msgid "ippfind: Expected semi-colon after %s."
+msgstr "ippfind: %s のあとにはセミコロンが必要です。"
+
+msgid "ippfind: Missing close brace in substitution."
+msgstr "ippfind: 置換文字列の閉じカッコがありません。"
+
+msgid "ippfind: Missing close parenthesis."
+msgstr "ippfind: 閉じカッコが不足しています。"
+
+msgid "ippfind: Missing expression before \"--and\"."
+msgstr "ippfind: \"--and\" の前には式が必要です。"
+
+msgid "ippfind: Missing expression before \"--or\"."
+msgstr "ippfind: \"--or\" の前には式が必要です。"
+
+#, c-format
+msgid "ippfind: Missing key name after %s."
+msgstr "ippfind: %s のあとにはキー名が必要です。"
+
+msgid "ippfind: Missing open parenthesis."
+msgstr "ippfind: 開きカッコが足りません。"
+
+#, c-format
+msgid "ippfind: Missing program after %s."
+msgstr "ippfind: %s のあとにはプログラム名が必要です。"
+
+#, c-format
+msgid "ippfind: Missing regular expression after %s."
+msgstr "ippfind: %s のあとには正規表現が必要です。"
+
+#, c-format
+msgid "ippfind: Missing semi-colon after %s."
+msgstr "ippfind: %s のあとにはセミコロンが必要です。"
+
+msgid "ippfind: Out of memory."
+msgstr "ippfind: メモリ不足です。"
+
+msgid "ippfind: Too many parenthesis."
+msgstr "ippfind: カッコが多すぎます。"
+
+#, c-format
+msgid "ippfind: Unable to browse or resolve: %s"
+msgstr "ippfind: %s をブラウズできないか名前解決できません。"
+
+#, c-format
+msgid "ippfind: Unable to execute \"%s\": %s"
+msgstr "ippfind: \"%s\" を実行できません: %s"
+
+#, c-format
+msgid "ippfind: Unable to use Bonjour: %s"
+msgstr "ippfind: Bonjour を利用できません: %s"
+
+#, c-format
+msgid "ippfind: Unknown variable \"{%s}\"."
+msgstr "ippfind: \"{%s}\" は不明な変数です。"
+
+msgid "ipptool: \"-i\" and \"-n\" are incompatible with \"-P\" and \"-X\"."
+msgstr ""
+"ipptool: \"-i\" および \"-n\" は \"-P\"、\"-X\" と一緒に指定できません。"
 
 #, c-format
 msgid "ipptool: Bad URI - %s."
 msgstr "ipptool: 不正な URI です - %s。"
-
-#, c-format
-msgid "ipptool: Bad version %s for \"-V\"."
-msgstr "ipptool: \"-V\" オプションに不正なバージョン %s が指定されました。"
 
 msgid "ipptool: Invalid seconds for \"-i\"."
 msgstr "ipptool: \"-i\" に不正な秒数が指定されました。"
@@ -4722,12 +5333,6 @@ msgstr "ipptool: \"-d\" に 名前=値 の指定がありません。"
 
 msgid "ipptool: Missing seconds for \"-i\"."
 msgstr "ipptool: \"-i\" に秒数の指定がありません。"
-
-msgid "ipptool: Missing timeout for \"-T\"."
-msgstr "ipptool: \"-T\" にタイムアウトの指定がありません。"
-
-msgid "ipptool: Missing version for \"-V\"."
-msgstr "ipptool: \"-V\" にバージョンの指定がありません。"
 
 msgid "ipptool: URI required before test file."
 msgstr "ipptool: テストファイルの前に URI の指定が必要です。"
@@ -4828,6 +5433,10 @@ msgstr ""
 "         先にプリンター名を指定する必要があります。"
 
 #, c-format
+msgid "lpadmin: Unable to open PPD \"%s\": %s on line %d."
+msgstr ""
+
+#, c-format
 msgid "lpadmin: Unable to open PPD file \"%s\" - %s"
 msgstr "lpadmin: PPD ファイル \"%s\" を開けません - %s"
 
@@ -4873,8 +5482,8 @@ msgstr "lpinfo: \"--language\" のあとには、言語を指定する必要が�
 
 msgid "lpinfo: Expected make and model after \"--make-and-model\"."
 msgstr ""
-"lpinfo: \"--make-and-model\" の後には、メーカーとモデルを指定する必要がありま"
-"す。"
+"lpinfo: \"--make-and-model\" のあとには、メーカーとモデルを指定する必要があり"
+"ます。"
 
 msgid "lpinfo: Expected product string after \"--product\"."
 msgstr "lpinfo: \"--product\" のあとには、製品名を指定する必要があります。"
@@ -4922,7 +5531,7 @@ msgstr "lpoptions: プリンターがありません。"
 
 #, c-format
 msgid "lpoptions: Unable to add printer or instance: %s"
-msgstr "lpoptions: プリンターまたはインスタンスを追加できません: %s。"
+msgstr "lpoptions: プリンターまたはインスタンスを追加できません: %s"
 
 #, c-format
 msgid "lpoptions: Unable to get PPD file for %s: %s"
@@ -4934,48 +5543,6 @@ msgstr "lpoptions: %s の PPD ファイルを開けません。"
 
 msgid "lpoptions: Unknown printer or class."
 msgstr "lpoptions: 未知のプリンターまたはクラスです。"
-
-msgid "lppasswd: Only root can add or delete passwords."
-msgstr "lppasswd: root だけがパスワードの追加と削除を行えます。"
-
-msgid "lppasswd: Password file busy."
-msgstr "lppasswd: パスワードファイルがビジー状態です。"
-
-msgid "lppasswd: Password file not updated."
-msgstr "lppasswd: パスワードファイルは更新されません。"
-
-msgid "lppasswd: Sorry, password doesn't match."
-msgstr "lppasswd: 残念ながら、パスワードがマッチしません。"
-
-msgid "lppasswd: Sorry, password rejected."
-msgstr "lppasswd: 残念ながら、パスワードは拒否されました。"
-
-msgid "lppasswd: Sorry, passwords don't match."
-msgstr "lppasswd: 残念ながら、パスワードがマッチしません。"
-
-#, c-format
-msgid "lppasswd: Unable to copy password string: %s"
-msgstr "lppasswd: パスワード文字列をコピーできません: %s"
-
-#, c-format
-msgid "lppasswd: Unable to open password file: %s"
-msgstr "lppasswd: パスワードファイルを開けません: %s"
-
-#, c-format
-msgid "lppasswd: Unable to write to password file: %s"
-msgstr "lppasswd: パスワードファイルに書き込めません: %s"
-
-#, c-format
-msgid "lppasswd: failed to backup old password file: %s"
-msgstr "lppasswd: 古いパスワードファイルのバックアップに失敗しました: %s"
-
-#, c-format
-msgid "lppasswd: failed to rename password file: %s"
-msgstr "lppasswd: パスワードファイルの名前の変更に失敗しました: %s"
-
-#, c-format
-msgid "lppasswd: user \"%s\" and group \"%s\" do not exist."
-msgstr "lppasswd: ユーザー \"%s\" およびグループ \"%s\" は存在しません。"
 
 #, c-format
 msgid ""
@@ -5006,7 +5573,7 @@ msgid "notify-recipient-uri URI \"%s\" uses unknown scheme."
 msgstr "notify-recipient-uri URI \"%s\" には未知のスキームが使われています。"
 
 msgid "pending"
-msgstr "保留"
+msgstr "プリンター待ち"
 
 #, c-format
 msgid "ppdc: Adding include directory \"%s\"."
@@ -5026,13 +5593,11 @@ msgstr "不正なフォント属性: %s"
 
 #, c-format
 msgid "ppdc: Bad resolution name \"%s\" on line %d of %s."
-msgstr ""
-"ppdc: 不正な resolution 名 \"%s\" があります。%d 行目、ファイル名 %s 。"
+msgstr "ppdc: 不正な resolution 名 \"%s\" があります。%d 行目、ファイル名 %s。"
 
 #, c-format
 msgid "ppdc: Bad status keyword %s on line %d of %s."
-msgstr ""
-"ppdc: 不正な status キーワード %s があります。%d 行目、ファイル名 %s 。"
+msgstr "ppdc: 不正な status キーワード %s があります。%d 行目、ファイル名 %s。"
 
 #, c-format
 msgid "ppdc: Bad variable substitution ($%c) on line %d of %s."
@@ -5047,7 +5612,7 @@ msgstr ""
 msgid "ppdc: Duplicate #po for locale %s on line %d of %s."
 msgstr ""
 "ppdc: locale %s に対して #po が二重に定義されています。%d 行目、ファイル名 "
-"%s 。"
+"%s。"
 
 #, c-format
 msgid "ppdc: Expected a filter definition on line %d of %s."
@@ -5125,7 +5690,7 @@ msgstr "ppdc: %d 行目、ファイル名 %s において group name/text が必
 
 #, c-format
 msgid "ppdc: Expected include filename on line %d of %s."
-msgstr "ppdc: %d 行目、ファイル名 %s において include ファイル名が必要です。"
+msgstr "ppdc: %d 行目、ファイル名 %s において include ファイル名 が必要です。"
 
 #, c-format
 msgid "ppdc: Expected integer on line %d of %s."
@@ -5488,7 +6053,7 @@ msgid "stat of %s failed: %s"
 msgstr "%s の状態取得に失敗しました: %s"
 
 msgid "status\t\tShow status of daemon and queue."
-msgstr "status\t\tデーモンとキューの状態を表示"
+msgstr "status\t\tデーモンとキューの状態を表示。"
 
 msgid "stopped"
 msgstr "停止"
@@ -5509,3 +6074,209 @@ msgstr "タイトルなし"
 
 msgid "variable-bindings uses indefinite length"
 msgstr "variable-bindings の長さが不定"
+
+#~ msgid "  -l                      Run cupsd from launchd(8)."
+#~ msgstr "  -l                      launchd(8) から cupsd を実行する。"
+
+#~ msgid ""
+#~ "\"%s\": Bad uriScheme value \"%s\" - bad length %d (RFC 2911 4.1.6 節)."
+#~ msgstr ""
+#~ "\"%s\": uriScheme 値 \"%s\" が誤っています - 誤った長さ %d (RFC 2911 "
+#~ "4.1.6 節)."
+
+#~ msgid "%-6s %-10.10s %-4d %-10d %-27.27s %.0f bytes"
+#~ msgstr "%-6s %-10.10s %-4d %-10d %-27.27s %.0f バイト"
+
+#~ msgid "%s: Error - expected destination after \"-b\" option."
+#~ msgstr "%s: エラー - \"-b\" オプションのあとに宛先が必要です。"
+
+#~ msgid "720dpi"
+#~ msgstr "720dpi"
+
+#~ msgid "Bad printer URI."
+#~ msgstr "不正なプリンター URI です。"
+
+#~ msgid "Enter old password:"
+#~ msgstr "古いパスワードを入力:"
+
+#~ msgid "Enter password again:"
+#~ msgstr "パスワードを再度入力:"
+
+#~ msgid "Enter password:"
+#~ msgstr "パスワードを入力:"
+
+#~ msgid "Looking for printer."
+#~ msgstr "プリンターを探しています。"
+
+#~ msgid "New Stylus Color Series"
+#~ msgstr "New Stylus Color シリーズ"
+
+#~ msgid "New Stylus Photo Series"
+#~ msgstr "New Stylus Photo シリーズ"
+
+#~ msgid "Output for printer %s is sent to %s"
+#~ msgstr "プリンター %s の出力は %s に送られます"
+
+#~ msgid "Output for printer %s is sent to remote printer %s on %s"
+#~ msgstr "プリンター %s の出力は、リモートプリンター %s (%s 上) に送られます"
+
+#~ msgid "Output for printer %s/%s is sent to %s"
+#~ msgstr "プリンター %s/%s の出力は %s に送られます"
+
+#~ msgid "Output for printer %s/%s is sent to remote printer %s on %s"
+#~ msgstr ""
+#~ "プリンター %s/%s の出力は、リモートプリンター %s (%s 上) に送られます"
+
+#~ msgid "Print file accepted - job ID %d."
+#~ msgstr "プリントファイルを受け付けました - ジョブ ID %d。"
+
+#~ msgid "Print file accepted - job ID unknown."
+#~ msgstr "NOTICE: プリントファイルを受け付けました - ジョブ ID 不明。"
+
+#~ msgid "Print file was not accepted."
+#~ msgstr "プリントファイルが受け付けられませんでした。"
+
+#~ msgid "Printing page %d, %d%% complete."
+#~ msgstr "ページ %d を印刷中、%d%% 完了しました。"
+
+#~ msgid "Purge Jobs"
+#~ msgstr "ジョブの削除"
+
+#~ msgid ""
+#~ "Rank   Owner      Pri  Job        Files                       Total Size"
+#~ msgstr ""
+#~ "ランク 所有者     優先 ジョブ     ファイル                    合計サイズ"
+
+#~ msgid "Stylus Color Series"
+#~ msgstr "Stylus Color シリーズ"
+
+#~ msgid "Stylus Photo Series"
+#~ msgstr "Stylus Photo シリーズ"
+
+#~ msgid ""
+#~ "The '%s' Job Description attribute cannot be supplied in a job creation "
+#~ "request."
+#~ msgstr "'%s' Job Description 属性はジョブ作成要求の中で指定できません。"
+
+#~ msgid "The output bin is almost full."
+#~ msgstr "排紙トレイがほとんど一杯です。"
+
+#~ msgid "The output bin is full."
+#~ msgstr "排紙トレイが一杯です。"
+
+#~ msgid "The output bin is missing."
+#~ msgstr "排紙トレイが見つかりません。"
+
+#~ msgid "The paper tray is almost empty."
+#~ msgstr "用紙トレイが空になりかけています。"
+
+#~ msgid "The paper tray is empty."
+#~ msgstr "用紙トレイが空です。"
+
+#~ msgid "The paper tray is missing."
+#~ msgstr "用紙トレイが見つかりません。"
+
+#~ msgid "The paper tray needs to be filled."
+#~ msgstr "用紙トレイに補充が必要です。"
+
+#~ msgid "The printer URI is incorrect or no longer exists."
+#~ msgstr "プリンター URI が誤っているか、もう存在しません。"
+
+#~ msgid "The printer does not support IPP/%d.%d, trying IPP/%s."
+#~ msgstr "プリンターが IPP/%d.%d をサポートしていません。IPP/%s を試します。"
+
+#~ msgid "The printer is running low on ink."
+#~ msgstr "プリンターのインクがもうすぐなくなります。"
+
+#~ msgid "The printer is running low on toner."
+#~ msgstr "プリンターのトナーがもうすぐなくなります。"
+
+#~ msgid "There is a paper jam."
+#~ msgstr "用紙づまりが発生しています。"
+
+#~ msgid "Unable to create compressed print file"
+#~ msgstr "圧縮プリントファイルを作成できません"
+
+#~ msgid "Unable to generate compressed print file"
+#~ msgstr "圧縮プリントファイルを生成できません"
+
+#~ msgid "Unable to open compressed print file"
+#~ msgstr "圧縮プリントファイルを開けません"
+
+#~ msgid "Unable to resolve printer URI."
+#~ msgstr "プリンター URI を解決できません。"
+
+#~ msgid "Usage: cupsfilter [ options ] filename"
+#~ msgstr "使い方: cupsfilter [オプション] ファイル名"
+
+#~ msgid "Usage: lppasswd [-g groupname]"
+#~ msgstr "使い方: lppasswd [-g グループ名]"
+
+#~ msgid ""
+#~ "Usage: lppasswd [-g groupname] [username]\n"
+#~ "       lppasswd [-g groupname] -a [username]\n"
+#~ "       lppasswd [-g groupname] -x [username]"
+#~ msgstr ""
+#~ "使い方: lppasswd [-g グループ名] [ユーザー名]\n"
+#~ "        lppasswd [-g グループ名] -a [ユーザー名]\n"
+#~ "        lppasswd [-g グループ名] -x [ユーザー名]"
+
+#~ msgid ""
+#~ "Your password must be at least 6 characters long, cannot contain your "
+#~ "username, and must contain at least one letter and number."
+#~ msgstr ""
+#~ "パスワードは少なくとも 6 文字以上で、あなたのユーザー名を含んではならず、"
+#~ "少なくとも 1 つの英字および数値を含んでなければなりません。"
+
+#~ msgid "cupsd: launchd(8) support not compiled in, running in normal mode."
+#~ msgstr ""
+#~ "cupsd: launchd(8) サポートがコンパイルされていないので、通常モードで動作し"
+#~ "ます。"
+
+#~ msgid "ipptool: \"-i\" and \"-n\" are incompatible with -X\"."
+#~ msgstr "ipptool: \"-i\" と \"-n\" は \"-X\" と組み合わせられません。"
+
+#~ msgid "ipptool: Bad version %s for \"-V\"."
+#~ msgstr "ipptool: \"-V\" オプションに不正なバージョン %s が指定されました。"
+
+#~ msgid "ipptool: Missing timeout for \"-T\"."
+#~ msgstr "ipptool: \"-T\" にタイムアウトの指定がありません。"
+
+#~ msgid "ipptool: Missing version for \"-V\"."
+#~ msgstr "ipptool: \"-V\" にバージョンの指定がありません。"
+
+#~ msgid "lppasswd: Only root can add or delete passwords."
+#~ msgstr "lppasswd: root だけがパスワードの追加と削除を行えます。"
+
+#~ msgid "lppasswd: Password file busy."
+#~ msgstr "lppasswd: パスワードファイルがビジー状態です。"
+
+#~ msgid "lppasswd: Password file not updated."
+#~ msgstr "lppasswd: パスワードファイルは更新されません。"
+
+#~ msgid "lppasswd: Sorry, password doesn't match."
+#~ msgstr "lppasswd: 残念ながら、パスワードがマッチしません。"
+
+#~ msgid "lppasswd: Sorry, password rejected."
+#~ msgstr "lppasswd: 残念ながら、パスワードは拒否されました。"
+
+#~ msgid "lppasswd: Sorry, passwords don't match."
+#~ msgstr "lppasswd: 残念ながら、パスワードがマッチしません。"
+
+#~ msgid "lppasswd: Unable to copy password string: %s"
+#~ msgstr "lppasswd: パスワード文字列をコピーできません: %s"
+
+#~ msgid "lppasswd: Unable to open password file: %s"
+#~ msgstr "lppasswd: パスワードファイルを開けません: %s"
+
+#~ msgid "lppasswd: Unable to write to password file: %s"
+#~ msgstr "lppasswd: パスワードファイルに書き込めません: %s"
+
+#~ msgid "lppasswd: failed to backup old password file: %s"
+#~ msgstr "lppasswd: 古いパスワードファイルのバックアップに失敗しました: %s"
+
+#~ msgid "lppasswd: failed to rename password file: %s"
+#~ msgstr "lppasswd: パスワードファイルの名前の変更に失敗しました: %s"
+
+#~ msgid "lppasswd: user \"%s\" and group \"%s\" do not exist."
+#~ msgstr "lppasswd: ユーザー \"%s\" およびグループ \"%s\" は存在しません。"

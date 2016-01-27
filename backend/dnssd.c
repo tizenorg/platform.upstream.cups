@@ -1,33 +1,17 @@
 /*
- * "$Id: dnssd.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: dnssd.c 12970 2015-11-13 20:02:51Z msweet $"
  *
- *   DNS-SD discovery backend for CUPS.
+ * DNS-SD discovery backend for CUPS.
  *
- *   Copyright 2008-2012 by Apple Inc.
+ * Copyright 2008-2015 by Apple Inc.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   "LICENSE" which should have been included with this file.  If this
- *   file is missing or damaged, see the license at "http://www.cups.org/".
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * "LICENSE" which should have been included with this file.  If this
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  *
- *   This file is subject to the Apple OS-Developed Software exception.
- *
- * Contents:
- *
- *   main()		     - Browse for printers.
- *   browse_callback()	     - Browse devices.
- *   browse_local_callback() - Browse local devices.
- *   client_callback()       - Avahi client callback function.
- *   compare_devices()	     - Compare two devices.
- *   exec_backend()	     - Execute the backend that corresponds to the
- *			       resolved service name.
- *   device_type()	     - Get DNS-SD type enumeration from string.
- *   get_device()	     - Create or update a device.
- *   query_callback()	     - Process query data.
- *   find_device()	     - Find a device from its name and domain.
- *   sigterm_handler()	     - Handle termination signals.
- *   unquote()		     - Unquote a name string.
+ * This file is subject to the Apple OS-Developed Software exception.
  */
 
 /*
@@ -77,7 +61,8 @@ typedef struct
 		*domain,		/* Domain name */
 		*fullName,		/* Full name */
 		*make_and_model,	/* Make and model from TXT record */
-		*device_id;		/* 1284 device ID from TXT record */
+		*device_id,		/* 1284 device ID from TXT record */
+		*uuid;			/* UUID from TXT record */
   cups_devtype_t type;			/* Device registration type */
   int		priority,		/* Priority associated with type */
 		cups_shared,		/* CUPS shared printer? */
@@ -95,6 +80,7 @@ static int		job_canceled = 0;
 static AvahiSimplePoll	*simple_poll = NULL;
 					/* Poll information */
 static int		got_data = 0;	/* Got data from poll? */
+static int		browsers = 0;	/* Number of running browsers */
 #endif /* HAVE_AVAHI */
 
 
@@ -137,7 +123,7 @@ static void		client_callback(AvahiClient *client,
 #endif /* HAVE_AVAHI */
 
 static int		compare_devices(cups_device_t *a, cups_device_t *b);
-static void		exec_backend(char **argv);
+static void		exec_backend(char **argv) __attribute__((noreturn));
 static cups_device_t	*get_device(cups_array_t *devices,
 			            const char *serviceName,
 			            const char *regtype,
@@ -332,7 +318,7 @@ main(int  argc,				/* I - Number of command-line args */
   if ((simple_poll = avahi_simple_poll_new()) == NULL)
   {
     fputs("DEBUG: Unable to create Avahi simple poll object.\n", stderr);
-    return (1);
+    return (0);
   }
 
   avahi_simple_poll_set_func(simple_poll, poll_callback, NULL);
@@ -342,9 +328,10 @@ main(int  argc,				/* I - Number of command-line args */
   if (!client)
   {
     fputs("DEBUG: Unable to create Avahi client.\n", stderr);
-    return (1);
+    return (0);
   }
 
+  browsers = 6;
   avahi_service_browser_new(client, AVAHI_IF_UNSPEC,
 			    AVAHI_PROTO_UNSPEC,
 			    "_fax-ipp._tcp", NULL, 0,
@@ -513,9 +500,15 @@ main(int  argc,				/* I - Number of command-line args */
           {
 	    unquote(uriName, best->fullName, sizeof(uriName));
 
-	    httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri),
-			    "dnssd", NULL, uriName, 0,
-			    best->cups_shared ? "/cups" : "/");
+            if (best->uuid)
+	      httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri,
+	                       sizeof(device_uri), "dnssd", NULL, uriName, 0,
+			       best->cups_shared ? "/cups?uuid=%s" : "/?uuid=%s",
+			       best->uuid);
+	    else
+	      httpAssembleURI(HTTP_URI_CODING_ALL, device_uri,
+	                      sizeof(device_uri), "dnssd", NULL, uriName, 0,
+			      best->cups_shared ? "/cups" : "/");
 
 	    cupsBackendReport("network", device_uri, best->make_and_model,
 	                      best->name, best->device_id, NULL);
@@ -546,9 +539,15 @@ main(int  argc,				/* I - Number of command-line args */
       {
 	unquote(uriName, best->fullName, sizeof(uriName));
 
-	httpAssembleURI(HTTP_URI_CODING_ALL, device_uri, sizeof(device_uri),
-			"dnssd", NULL, uriName, 0,
-			best->cups_shared ? "/cups" : "/");
+	if (best->uuid)
+	  httpAssembleURIf(HTTP_URI_CODING_ALL, device_uri,
+			   sizeof(device_uri), "dnssd", NULL, uriName, 0,
+			   best->cups_shared ? "/cups?uuid=%s" : "/?uuid=%s",
+			   best->uuid);
+	else
+	  httpAssembleURI(HTTP_URI_CODING_ALL, device_uri,
+			  sizeof(device_uri), "dnssd", NULL, uriName, 0,
+			  best->cups_shared ? "/cups" : "/");
 
 	cupsBackendReport("network", device_uri, best->make_and_model,
 			  best->name, best->device_id, NULL);
@@ -558,7 +557,11 @@ main(int  argc,				/* I - Number of command-line args */
 
       fprintf(stderr, "DEBUG: sent=%d, count=%d\n", sent, count);
 
+#ifdef HAVE_AVAHI
+      if (sent == cupsArrayCount(devices) && browsers == 0)
+#else
       if (sent == cupsArrayCount(devices))
+#endif /* HAVE_AVAHI */
 	break;
     }
   }
@@ -710,9 +713,12 @@ browse_callback(
 	break;
 
     case AVAHI_BROWSER_REMOVE:
-    case AVAHI_BROWSER_ALL_FOR_NOW:
     case AVAHI_BROWSER_CACHE_EXHAUSTED:
         break;
+
+    case AVAHI_BROWSER_ALL_FOR_NOW:
+	browsers--;
+	break;
   }
 }
 
@@ -824,8 +830,8 @@ exec_backend(char **argv)		/* I - Command-line arguments */
  * 'device_type()' - Get DNS-SD type enumeration from string.
  */
 
-static int
-device_type(const char *regtype)
+static cups_devtype_t			/* O - Device type */
+device_type(const char *regtype)	/* I - Service registration type */
 {
 #ifdef HAVE_AVAHI
   if (!strcmp(regtype, "_ipp._tcp"))
@@ -915,9 +921,6 @@ get_device(cups_array_t *devices,	/* I - Device array */
   * Yes, add the device...
   */
 
-  fprintf(stderr, "DEBUG: Found \"%s.%s%s\"...\n", serviceName, regtype,
-	  replyDomain);
-
   device           = calloc(sizeof(cups_device_t), 1);
   device->name     = strdup(serviceName);
   device->domain   = strdup(replyDomain);
@@ -933,8 +936,7 @@ get_device(cups_array_t *devices,	/* I - Device array */
 #ifdef HAVE_DNSSD
   DNSServiceConstructFullName(fullName, serviceName, regtype, replyDomain);
 #else /* HAVE_AVAHI */
-  avahi_service_name_join(fullName, kDNSServiceMaxDomainName,
-			   serviceName, regtype, replyDomain);
+  avahi_service_name_join(fullName, kDNSServiceMaxDomainName, serviceName, regtype, replyDomain);
 #endif /* HAVE_DNSSD */
 
   device->fullName = strdup(fullName);
@@ -1031,6 +1033,7 @@ query_callback(
 		value[256],		/* Value string */
 		make_and_model[512],	/* Manufacturer and model */
 		model[256],		/* Model */
+		pdl[256],		/* PDL */
 		device_id[2048];	/* 1284 device ID */
 
 
@@ -1079,8 +1082,9 @@ query_callback(
 
   device_id[0]      = '\0';
   make_and_model[0] = '\0';
+  pdl[0]            = '\0';
 
-  strcpy(model, "Unknown");
+  strlcpy(model, "Unknown", sizeof(model));
 
   for (data = rdata, dataend = data + rdlen;
        data < dataend;
@@ -1100,7 +1104,7 @@ query_callback(
     datanext = data + datalen;
 
     for (ptr = key; data < datanext && *data != '='; data ++)
-      *ptr++ = *data;
+      *ptr++ = (char)*data;
     *ptr = '\0';
 
     if (data < datanext && *data == '=')
@@ -1108,7 +1112,7 @@ query_callback(
       data ++;
 
       if (data < datanext)
-	memcpy(value, data, datanext - data);
+	memcpy(value, data, (size_t)(datanext - data));
       value[datanext - data] = '\0';
 
       fprintf(stderr, "DEBUG2: query_callback: \"%s=%s\".\n",
@@ -1128,15 +1132,14 @@ query_callback(
       */
 
       ptr = device_id + strlen(device_id);
-      snprintf(ptr, sizeof(device_id) - (ptr - device_id), "%s:%s;",
-	       key + 4, value);
+      snprintf(ptr, sizeof(device_id) - (size_t)(ptr - device_id), "%s:%s;", key + 4, value);
     }
 
     if (!_cups_strcasecmp(key, "usb_MFG") || !_cups_strcasecmp(key, "usb_MANU") ||
 	!_cups_strcasecmp(key, "usb_MANUFACTURER"))
-      strcpy(make_and_model, value);
+      strlcpy(make_and_model, value, sizeof(make_and_model));
     else if (!_cups_strcasecmp(key, "usb_MDL") || !_cups_strcasecmp(key, "usb_MODEL"))
-      strcpy(model, value);
+      strlcpy(model, value, sizeof(model));
     else if (!_cups_strcasecmp(key, "product") && !strstr(value, "Ghostscript"))
     {
       if (value[0] == '(')
@@ -1148,18 +1151,20 @@ query_callback(
 	if ((ptr = value + strlen(value) - 1) > value && *ptr == ')')
 	  *ptr = '\0';
 
-	strcpy(model, value + 1);
+	strlcpy(model, value + 1, sizeof(model));
       }
       else
-	strcpy(model, value);
+	strlcpy(model, value, sizeof(model));
     }
     else if (!_cups_strcasecmp(key, "ty"))
     {
-      strcpy(model, value);
+      strlcpy(model, value, sizeof(model));
 
       if ((ptr = strchr(model, ',')) != NULL)
 	*ptr = '\0';
     }
+    else if (!_cups_strcasecmp(key, "pdl"))
+      strlcpy(pdl, value, sizeof(pdl));
     else if (!_cups_strcasecmp(key, "priority"))
       device->priority = atoi(value);
     else if ((device->type == CUPS_DEVICE_IPP ||
@@ -1176,6 +1181,8 @@ query_callback(
       if (device->type == CUPS_DEVICE_PRINTER)
 	device->sent = 1;
     }
+    else if (!_cups_strcasecmp(key, "UUID"))
+      device->uuid = strdup(value);
   }
 
   if (device->device_id)
@@ -1196,12 +1203,51 @@ query_callback(
       * Assume the first word is the make...
       */
 
-      memcpy(make_and_model, model, ptr - model);
+      memcpy(make_and_model, model, (size_t)(ptr - model));
       make_and_model[ptr - model] = '\0';
 
       snprintf(device_id, sizeof(device_id), "MFG:%s;MDL:%s",
 	       make_and_model, ptr + 1);
     }
+  }
+
+  if (device_id[0] &&
+      !strstr(device_id, "CMD:") &&
+      !strstr(device_id, "COMMAND SET:") &&
+      (strstr(pdl, "application/pdf") ||
+       strstr(pdl, "application/postscript") ||
+       strstr(pdl, "application/vnd.hp-PCL") ||
+       strstr(pdl, "image/")))
+  {
+    value[0] = '\0';
+    if (strstr(pdl, "application/pdf"))
+      strlcat(value, ",PDF", sizeof(value));
+    if (strstr(pdl, "application/postscript"))
+      strlcat(value, ",PS", sizeof(value));
+    if (strstr(pdl, "application/vnd.hp-PCL"))
+      strlcat(value, ",PCL", sizeof(value));
+    for (ptr = strstr(pdl, "image/"); ptr; ptr = strstr(ptr, "image/"))
+    {
+      char *valptr = value + strlen(value);
+      					/* Pointer into value */
+
+      if (valptr < (value + sizeof(value) - 1))
+        *valptr++ = ',';
+
+      ptr += 6;
+      while (isalnum(*ptr & 255) || *ptr == '-' || *ptr == '.')
+      {
+        if (isalnum(*ptr & 255) && valptr < (value + sizeof(value) - 1))
+          *valptr++ = (char)toupper(*ptr++ & 255);
+        else
+          break;
+      }
+
+      *valptr = '\0';
+    }
+
+    ptr = device_id + strlen(device_id);
+    snprintf(ptr, sizeof(device_id) - (size_t)(ptr - device_id), "CMD:%s;", value + 1);
   }
 
   if (device_id[0])
@@ -1235,7 +1281,7 @@ sigterm_handler(int sig)		/* I - Signal number (unused) */
   (void)sig;
 
   if (job_canceled)
-    exit(CUPS_BACKEND_OK);
+    _exit(CUPS_BACKEND_OK);
   else
     job_canceled = 1;
 }
@@ -1276,5 +1322,5 @@ unquote(char       *dst,		/* I - Destination buffer */
 
 
 /*
- * End of "$Id: dnssd.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: dnssd.c 12970 2015-11-13 20:02:51Z msweet $".
  */

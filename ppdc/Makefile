@@ -1,16 +1,16 @@
 #
-# "$Id: Makefile 11173 2013-07-23 12:31:34Z msweet $"
+# "$Id: Makefile 12615 2015-05-06 20:21:51Z msweet $"
 #
-#   Makefile for the CUPS PPD Compiler.
+# Makefile for the CUPS PPD Compiler.
 #
-#   Copyright 2007-2012 by Apple Inc.
-#   Copyright 2002-2006 by Easy Software Products.
+# Copyright 2007-2015 by Apple Inc.
+# Copyright 2002-2006 by Easy Software Products.
 #
-#   These coded instructions, statements, and computer programs are the
-#   property of Apple Inc. and are protected by Federal copyright
-#   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
-#   which should have been included with this file.  If this file is
-#   file is missing or damaged, see the license at "http://www.cups.org/".
+# These coded instructions, statements, and computer programs are the
+# property of Apple Inc. and are protected by Federal copyright
+# law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+# which should have been included with this file.  If this file is
+# file is missing or damaged, see the license at "http://www.cups.org/".
 #
 
 #
@@ -104,7 +104,7 @@ clean:
 	$(RM) $(TARGETS) $(UNITTARGETS)
 	$(RM) -r ppd ppd2
 	$(RM) sample-import.drv sample.c test.drv
-	$(RM) libcupsppdc.so libcupsppdc.sl libcupsppdc.dylib
+	$(RM) libcupsppdc.so libcupsppdc.dylib
 
 
 #
@@ -145,6 +145,7 @@ install-exec:
 		$(INSTALL_DIR) $(SYMROOT); \
 		for file in $(EXECTARGETS); do \
 			cp $$file $(SYMROOT); \
+			dsymutil $(SYMROOT)/$$file; \
 		done \
 	fi
 
@@ -167,7 +168,7 @@ install-libs: $(INSTALLSTATIC)
 	echo Installing libraries in $(LIBDIR)...
 	$(INSTALL_DIR) -m 755 $(LIBDIR)
 	$(INSTALL_LIB) $(LIBCUPSPPDC) $(LIBDIR)
-	if test $(LIBCUPSPPDC) = "libcupsppdc.so.1" -o $(LIBCUPSPPDC) = "libcupsppdc.sl.1"; then \
+	if test $(LIBCUPSPPDC) = "libcupsppdc.so.1"; then \
 		$(RM) $(LIBDIR)/`basename $(LIBCUPSPPDC) .1`; \
 		$(LN) $(LIBCUPSPPDC) $(LIBDIR)/`basename $(LIBCUPSPPDC) .1`; \
 	fi
@@ -178,6 +179,7 @@ install-libs: $(INSTALLSTATIC)
 	if test "x$(SYMROOT)" != "x"; then \
 		$(INSTALL_DIR) $(SYMROOT); \
 		cp $(LIBCUPSPPDC) $(SYMROOT); \
+		dsymutil $(SYMROOT)/$(LIBCUPSPPDC); \
 	fi
 
 installstatic:
@@ -200,9 +202,6 @@ uninstall:
 	$(RM) $(LIBDIR)/libcupsppdc.1.dylib
 	$(RM) $(LIBDIR)/libcupsppdc.a
 	$(RM) $(LIBDIR)/libcupsppdc.dylib
-	$(RM) $(LIBDIR)/libcupsppdc_s.a
-	$(RM) $(LIBDIR)/libcupsppdc.sl
-	$(RM) $(LIBDIR)/libcupsppdc.sl.1
 	$(RM) $(LIBDIR)/libcupsppdc.so
 	$(RM) $(LIBDIR)/libcupsppdc.so.1
 	-$(RMDIR) $(LIBDIR)
@@ -291,9 +290,9 @@ ppdi-static:		ppdc-static ppdi.o libcupsppdc.a  ../cups/$(LIBCUPSSTATIC)
 		$(COMMONLIBS) $(LIBZ)
 	echo Testing PPD importer...
 	$(RM) -r ppd ppd2 sample-import.drv
-	./ppdc-static -I ../data sample.drv
+	./ppdc-static -l en -I ../data sample.drv
 	./ppdi-static -I ../data -o sample-import.drv ppd/*
-	./ppdc-static -I ../data -d ppd2 sample-import.drv
+	./ppdc-static -l en -I ../data -d ppd2 sample-import.drv
 	if diff -r ppd ppd2 >/dev/null; then \
 		echo PPD import OK; \
 	else \
@@ -332,10 +331,10 @@ testcatalog:		testcatalog.o libcupsppdc.a ../cups/$(LIBCUPSSTATIC)
 
 
 #
-# libcupsppdc.so.1, libcupsppdc.sl.1
+# libcupsppdc.so.1
 #
 
-libcupsppdc.so.1 libcupsppdc.sl.1:	$(LIBOBJS) ../cups/$(LIBCUPS)
+libcupsppdc.so.1:	$(LIBOBJS) ../cups/$(LIBCUPS)
 	echo Linking $@...
 	$(DSOXX) $(ARCHFLAGS) $(DSOFLAGS) -o $@ $(LIBOBJS) $(LINKCUPS)
 	$(RM) `basename $@ .1`
@@ -355,20 +354,9 @@ libcupsppdc.1.dylib:	$(LIBOBJS) ../cups/$(LIBCUPS)
 		-current_version 1.0.0 \
 		-compatibility_version 1.0.0 \
 		-exported_symbols_list t.exp \
-		$(LIBOBJS) $(LINKCUPS)
+		$(LIBOBJS) $(LINKCUPS) $(COMMONLIBS)
 	$(RM) libcupsppdc.dylib t.exp
 	$(LN) $@ libcupsppdc.dylib
-
-
-#
-# libcupsppdc_s.a
-#
-
-libcupsppdc_s.a:	$(LIBOBJS) ../cups/$(LIBCUPS)
-	echo Creating $@...
-	$(DSOXX) $(DSOFLAGS) -o libcupsppdc_s.o $(LIBOBJS) $(LINKCUPS)
-	$(RM) $@
-	$(AR) $(ARFLAGS) $@ libcupsppdc_s.o
 
 
 #
@@ -400,5 +388,5 @@ include Dependencies
 
 
 #
-# End of "$Id: Makefile 11173 2013-07-23 12:31:34Z msweet $".
+# End of "$Id: Makefile 12615 2015-05-06 20:21:51Z msweet $".
 #

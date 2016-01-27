@@ -1,5 +1,5 @@
 /*
- * "$Id: globals.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: globals.c 12480 2015-02-03 12:36:34Z msweet $"
  *
  *   Global variable access routines for CUPS.
  *
@@ -38,6 +38,10 @@
  */
 
 
+#ifdef DEBUG
+static int		cups_global_index = 0;
+					/* Next thread number */
+#endif /* DEBUG */
 static _cups_threadkey_t cups_globals_key = _CUPS_THREADKEY_INITIALIZER;
 					/* Thread local storage key */
 #ifdef HAVE_PTHREAD_H
@@ -212,9 +216,17 @@ cups_globals_alloc(void)
   memset(cg, 0, sizeof(_cups_globals_t));
   cg->encryption     = (http_encryption_t)-1;
   cg->password_cb    = (cups_password_cb2_t)_cupsGetPassword;
-  cg->any_root       = 1;
-  cg->expired_certs  = 1;
-  cg->expired_root   = 1;
+  cg->any_root       = -1;
+  cg->expired_certs  = -1;
+  cg->validate_certs = -1;
+
+#ifdef DEBUG
+ /*
+  * Friendly thread ID for debugging...
+  */
+
+  cg->thread_id = ++ cups_global_index;
+#endif /* DEBUG */
 
  /*
   * Then set directories as appropriate...
@@ -227,7 +239,7 @@ cups_globals_alloc(void)
     * Open the registry...
     */
 
-    strcpy(installdir, "C:/Program Files/cups.org");
+    strlcpy(installdir, "C:/Program Files/cups.org", sizeof(installdir));
 
     if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\cups.org", 0, KEY_READ,
                       &key))
@@ -349,7 +361,9 @@ cups_globals_free(_cups_globals_t *cg)	/* I - Pointer to global data */
 
   httpClose(cg->http);
 
+#ifdef HAVE_SSL
   _httpFreeCredentials(cg->tls_credentials);
+#endif /* HAVE_SSL */
 
   cupsFileClose(cg->stdio_files[0]);
   cupsFileClose(cg->stdio_files[1]);
@@ -380,5 +394,5 @@ cups_globals_init(void)
 
 
 /*
- * End of "$Id: globals.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: globals.c 12480 2015-02-03 12:36:34Z msweet $".
  */

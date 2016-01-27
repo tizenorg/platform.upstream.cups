@@ -1,16 +1,16 @@
 /*
- * "$Id: conf.h 11221 2013-08-06 16:16:01Z msweet $"
+ * "$Id: conf.h 12689 2015-06-03 19:49:54Z msweet $"
  *
- *   Configuration file definitions for the CUPS scheduler.
+ * Configuration file definitions for the CUPS scheduler.
  *
- *   Copyright 2007-2013 by Apple Inc.
- *   Copyright 1997-2007 by Easy Software Products, all rights reserved.
+ * Copyright 2007-2015 by Apple Inc.
+ * Copyright 1997-2007 by Easy Software Products, all rights reserved.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 
@@ -20,9 +20,10 @@
 
 typedef enum
 {
-  CUPSD_LOG_PPD = -4,			/* Used internally for PPD keywords */
+  CUPSD_LOG_PPD = -5,			/* Used internally for PPD keywords */
   CUPSD_LOG_ATTR,			/* Used internally for attributes */
-  CUPSD_LOG_STATE,			/* Used internally for state-reasons */
+  CUPSD_LOG_STATE,			/* Used internally for printer-state-reasons */
+  CUPSD_LOG_JOBSTATE,			/* Used internally for job-state-reasons */
   CUPSD_LOG_PAGE,			/* Used internally for page logging */
   CUPSD_LOG_NONE,
   CUPSD_LOG_EMERG,			/* Emergency issues */
@@ -38,6 +39,7 @@ typedef enum
 
 typedef enum
 {
+  CUPSD_ACCESSLOG_NONE,			/* Log no requests */
   CUPSD_ACCESSLOG_CONFIG,		/* Log config requests */
   CUPSD_ACCESSLOG_ACTIONS,		/* Log config, print, and job management requests */
   CUPSD_ACCESSLOG_ALL			/* Log everything */
@@ -48,6 +50,13 @@ typedef enum
   CUPSD_TIME_STANDARD,			/* "Standard" Apache/CLF format */
   CUPSD_TIME_USECS			/* Standard format with microseconds */
 } cupsd_time_t;
+
+typedef enum
+{
+  CUPSD_SANDBOXING_OFF,			/* No sandboxing */
+  CUPSD_SANDBOXING_RELAXED,		/* Relaxed sandboxing */
+  CUPSD_SANDBOXING_STRICT		/* Strict sandboxing */
+} cupsd_sandboxing_t;
 
 
 /*
@@ -70,14 +79,6 @@ typedef enum
 #define PRINTCAP_BSD		0	/* Berkeley LPD format */
 #define PRINTCAP_SOLARIS	1	/* Solaris lpsched format */
 #define PRINTCAP_PLIST		2	/* OS X plist format */
-
-
-/*
- * SSL options (bits)...
- */
-
-#define CUPSD_SSL_NONE		0	/* No special options */
-#define CUPSD_SSL_NOEMPTY	1	/* Do not insert empty fragments */
 
 
 /*
@@ -149,38 +150,44 @@ VAR char		*AccessLog		VALUE(NULL),
 					/* Temporary directory */
 			*Printcap		VALUE(NULL),
 					/* Printcap file */
-			*PrintcapGUI		VALUE(NULL),
-					/* GUI program to use for IRIX */
 			*FontPath		VALUE(NULL),
 					/* Font search path */
 			*RemoteRoot		VALUE(NULL),
 					/* Remote root user */
 			*Classification		VALUE(NULL);
 					/* Classification of system */
-VAR uid_t		User			VALUE(1);
+VAR uid_t		User			VALUE(1),
 					/* User ID for server */
+			RunUser			VALUE(0);
+					/* User to run as, used for files */
 VAR gid_t		Group			VALUE(0);
 					/* Group ID for server */
 VAR cupsd_accesslog_t	AccessLogLevel		VALUE(CUPSD_ACCESSLOG_ACTIONS);
 					/* Access log level */
 VAR int			ClassifyOverride	VALUE(0),
 					/* Allow overrides? */
-			ConfigFilePerm		VALUE(0640),
-					/* Permissions for config files */
 			LogDebugHistory		VALUE(200),
 					/* Amount of automatic debug history */
 			FatalErrors		VALUE(CUPSD_FATAL_CONFIG),
 					/* Which errors are fatal? */
 			StrictConformance	VALUE(FALSE),
 					/* Require strict IPP conformance? */
-			SyncOnClose		VALUE(FALSE),
+			SyncOnClose		VALUE(FALSE);
 					/* Call fsync() when closing files? */
-			LogFilePerm		VALUE(0644);
+VAR mode_t		ConfigFilePerm		VALUE(0640U),
+					/* Permissions for config files */
+			LogFilePerm		VALUE(0644U);
 					/* Permissions for log files */
 VAR cupsd_loglevel_t	LogLevel		VALUE(CUPSD_LOG_WARN);
 					/* Error log level */
 VAR cupsd_time_t	LogTimeFormat		VALUE(CUPSD_TIME_STANDARD);
 					/* Log file time format */
+VAR cups_file_t		*LogStderr		VALUE(NULL);
+					/* Stderr file, if any */
+VAR cupsd_sandboxing_t	Sandboxing		VALUE(CUPSD_SANDBOXING_STRICT);
+					/* Sandboxing level */
+VAR int			UseSandboxing	VALUE(1);
+					/* Use sandboxing for child procs? */
 VAR int			MaxClients		VALUE(100),
 					/* Maximum number of clients */
 			MaxClientsPerHost	VALUE(0),
@@ -211,8 +218,6 @@ VAR int			MaxClients		VALUE(100),
 					/* Timeout before reload from SIGHUP */
 			RootCertDuration	VALUE(300),
 					/* Root certificate update interval */
-			RunUser			VALUE(0),
-					/* User to run as, used for files */
 			PrintcapFormat		VALUE(PRINTCAP_BSD),
 					/* Format of printcap file? */
 			DefaultShared		VALUE(TRUE),
@@ -237,20 +242,14 @@ VAR const char		**MimeTypes		VALUE(NULL);
 					/* Array of MIME types */
 
 #ifdef HAVE_SSL
-VAR char		*ServerCertificate	VALUE(NULL);
-					/* Server certificate file */
-#  if defined(HAVE_LIBSSL) || defined(HAVE_GNUTLS)
-VAR char		*ServerKey		VALUE(NULL);
-					/* Server key file */
-#  endif /* HAVE_LIBSSL || HAVE_GNUTLS */
-VAR int			SSLOptions		VALUE(CUPSD_SSL_NONE);
-					/* SSL/TLS options */
+VAR char		*ServerKeychain		VALUE(NULL);
+					/* Keychain holding cert + key */
 #endif /* HAVE_SSL */
 
-#ifdef HAVE_LAUNCHD
-VAR int			LaunchdTimeout		VALUE(10);
+#if defined(HAVE_LAUNCHD) || defined(HAVE_SYSTEMD)
+VAR int			IdleExitTimeout		VALUE(60);
 					/* Time after which an idle cupsd will exit */
-#endif /* HAVE_LAUNCHD */
+#endif /* HAVE_LAUNCHD || HAVE_SYSTEMD */
 
 #ifdef HAVE_AUTHORIZATION_H
 VAR char		*SystemGroupAuthKey	VALUE(NULL);
@@ -273,18 +272,21 @@ gss_cred_id_t		ServerCreds;	/* Server's GSS credentials */
 extern void	cupsdAddAlias(cups_array_t *aliases, const char *name);
 extern int	cupsdCheckLogFile(cups_file_t **lf, const char *logname);
 extern int	cupsdCheckPermissions(const char *filename,
-		                      const char *suffix, int mode,
-	 			      int user, int group, int is_dir,
+		                      const char *suffix, mode_t mode,
+	 			      uid_t user, gid_t group, int is_dir,
 				      int create_dir);
 extern int	cupsdCheckProgram(const char *filename, cupsd_printer_t *p);
 extern int	cupsdDefaultAuthType(void);
 extern void	cupsdFreeAliases(cups_array_t *aliases);
 extern char	*cupsdGetDateTime(struct timeval *t, cupsd_time_t format);
+extern int	cupsdLogClient(cupsd_client_t *con, int level,
+                               const char *message, ...)
+                               __attribute__((__format__(__printf__, 3, 4)));
 extern void	cupsdLogFCMessage(void *context, _cups_fc_result_t result,
 		                  const char *message);
 #ifdef HAVE_GSSAPI
-extern int	cupsdLogGSSMessage(int level, int major_status,
-		                   int minor_status,
+extern int	cupsdLogGSSMessage(int level, OM_uint32 major_status,
+		                   OM_uint32 minor_status,
 		                   const char *message, ...);
 #endif /* HAVE_GSSAPI */
 extern int	cupsdLogJob(cupsd_job_t *job, int level, const char *message,
@@ -298,5 +300,5 @@ extern int	cupsdWriteErrorLog(int level, const char *message);
 
 
 /*
- * End of "$Id: conf.h 11221 2013-08-06 16:16:01Z msweet $".
+ * End of "$Id: conf.h 12689 2015-06-03 19:49:54Z msweet $".
  */

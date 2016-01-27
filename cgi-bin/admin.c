@@ -1,37 +1,16 @@
 /*
- * "$Id: admin.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: admin.c 12516 2015-02-12 20:18:11Z msweet $"
  *
- *   Administration CGI for CUPS.
+ * Administration CGI for CUPS.
  *
- *   Copyright 2007-2012 by Apple Inc.
- *   Copyright 1997-2007 by Easy Software Products.
+ * Copyright 2007-2015 by Apple Inc.
+ * Copyright 1997-2007 by Easy Software Products.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
- *
- * Contents:
- *
- *   main()                    - Main entry for CGI.
- *   choose_device_cb()        - Add a device to the device selection page.
- *   do_add_rss_subscription() - Add a RSS subscription.
- *   do_am_class()             - Add or modify a class.
- *   do_am_printer()           - Add or modify a printer.
- *   do_cancel_subscription()  - Cancel a subscription.
- *   do_config_server()        - Configure server settings.
- *   do_delete_class()         - Delete a class.
- *   do_delete_printer()       - Delete a printer.
- *   do_export()               - Export printers to Samba.
- *   do_list_printers()        - List available printers.
- *   do_menu()                 - Show the main menu.
- *   do_set_allowed_users()    - Set the allowed/denied users for a queue.
- *   do_set_default()          - Set the server default printer/class.
- *   do_set_options()          - Configure the default options for a queue.
- *   do_set_sharing()          - Set printer-is-shared value.
- *   get_option_value()        - Return the value of an option.
- *   get_points()              - Get a value in points.
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 /*
@@ -39,6 +18,8 @@
  */
 
 #include "cgi-private.h"
+#include <cups/http-private.h>
+#include <cups/ppd-private.h>
 #include <cups/adminutil.h>
 #include <cups/ppd.h>
 #include <errno.h>
@@ -59,12 +40,7 @@ static int	current_device = 0;	/* Current device shown */
  * Local functions...
  */
 
-static void	choose_device_cb(const char *device_class,
-                                 const char *device_id, const char *device_info,
-                                 const char *device_make_and_model,
-                                 const char *device_uri,
-                                 const char *device_location,
-				 const char *title);
+static void	choose_device_cb(const char *device_class, const char *device_id, const char *device_info, const char *device_make_and_model, const char *device_uri, const char *device_location, const char *title);
 static void	do_add_rss_subscription(http_t *http);
 static void	do_am_class(http_t *http, int modify);
 static void	do_am_printer(http_t *http, int modify);
@@ -82,6 +58,7 @@ static void	do_set_sharing(http_t *http);
 static char	*get_option_value(ppd_file_t *ppd, const char *name,
 		                  char *buffer, size_t bufsize);
 static double	get_points(double number, const char *uval);
+static char	*get_printer_ppd(const char *uri, char *buffer, size_t bufsize);
 
 
 /*
@@ -89,8 +66,7 @@ static double	get_points(double number, const char *uval);
  */
 
 int					/* O - Exit status */
-main(int  argc,				/* I - Number of command-line arguments */
-     char *argv[])			/* I - Command-line arguments */
+main(void)
 {
   http_t	*http;			/* Connection to the server */
   const char	*op;			/* Operation name */
@@ -854,7 +830,8 @@ do_am_printer(http_t *http,		/* I - HTTP connection */
   const cgi_file_t *file;		/* Uploaded file, if any */
   const char	*var;			/* CGI variable */
   char		uri[HTTP_MAX_URI],	/* Device or printer URI */
-		*uriptr;		/* Pointer into URI */
+		*uriptr,		/* Pointer into URI */
+		evefile[1024] = "";	/* IPP Everywhere PPD file */
   int		maxrate;		/* Maximum baud rate */
   char		baudrate[255];		/* Baud rate string */
   const char	*name,			/* Pointer to class name */
@@ -962,13 +939,13 @@ do_am_printer(http_t *http,		/* I - HTTP connection */
       else if (!_cups_strncasecmp(make, "laserjet", 8) ||
                !_cups_strncasecmp(make, "deskjet", 7) ||
                !_cups_strncasecmp(make, "designjet", 9))
-        strcpy(make, "HP");
+        strlcpy(make, "HP", sizeof(make));
       else if (!_cups_strncasecmp(make, "phaser", 6))
-        strcpy(make, "Xerox");
+        strlcpy(make, "Xerox", sizeof(make));
       else if (!_cups_strncasecmp(make, "stylus", 6))
-        strcpy(make, "Epson");
+        strlcpy(make, "Epson", sizeof(make));
       else
-        strcpy(make, "Generic");
+        strlcpy(make, "Generic", sizeof(make));
 
       if (!cgiGetVariable("CURRENT_MAKE"))
         cgiSetVariable("CURRENT_MAKE", make);
@@ -1172,7 +1149,7 @@ do_am_printer(http_t *http,		/* I - HTTP connection */
       char		filename[1024];	/* PPD filename */
       ppd_file_t	*ppd;		/* PPD information */
       char		buffer[1024];	/* Buffer */
-      int		bytes;		/* Number of bytes */
+      ssize_t		bytes;		/* Number of bytes */
       http_status_t	get_status;	/* Status of GET */
 
 
@@ -1194,7 +1171,7 @@ do_am_printer(http_t *http,		/* I - HTTP connection */
       else if ((fd = cupsTempFd(filename, sizeof(filename))) >= 0)
       {
 	while ((bytes = httpRead2(http, buffer, sizeof(buffer))) > 0)
-          write(fd, buffer, bytes);
+          write(fd, buffer, (size_t)bytes);
 
 	close(fd);
 
@@ -1211,8 +1188,10 @@ do_am_printer(http_t *http,		/* I - HTTP connection */
 	}
 	else
 	{
+	  int linenum;			/* Line number */
+
 	  fprintf(stderr, "ERROR: Unable to open PPD file %s: %s\n",
-	          filename, ppdErrorString(ppdLastError(&bytes)));
+	          filename, ppdErrorString(ppdLastError(&linenum)));
 	}
       }
       else
@@ -1348,19 +1327,21 @@ do_am_printer(http_t *http,		/* I - HTTP connection */
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri",
                  NULL, uri);
 
+    if (!file)
+    {
+      var = cgiGetVariable("PPD_NAME");
+      if (!strcmp(var, "everywhere"))
+        get_printer_ppd(cgiGetVariable("DEVICE_URI"), evefile, sizeof(evefile));
+      else if (strcmp(var, "__no_change__"))
+	ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "ppd-name",
+		     NULL, var);
+    }
+
     ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-location",
                  NULL, cgiGetVariable("PRINTER_LOCATION"));
 
     ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_TEXT, "printer-info",
                  NULL, cgiGetVariable("PRINTER_INFO"));
-
-    if (!file)
-    {
-      var = cgiGetVariable("PPD_NAME");
-      if (strcmp(var, "__no_change__"))
-	ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "ppd-name",
-		     NULL, var);
-    }
 
     strlcpy(uri, cgiGetVariable("DEVICE_URI"), sizeof(uri));
 
@@ -1380,7 +1361,7 @@ do_am_printer(http_t *http,		/* I - HTTP connection */
       if ((uriptr = strchr(uri, '?')) == NULL)
         uriptr = uri + strlen(uri);
 
-      snprintf(uriptr, sizeof(uri) - (uriptr - uri),
+      snprintf(uriptr, sizeof(uri) - (size_t)(uriptr - uri),
                "?baud=%s+bits=%s+parity=%s+flow=%s",
                cgiGetVariable("BAUDRATE"), cgiGetVariable("BITS"),
 	       cgiGetVariable("PARITY"), cgiGetVariable("FLOW"));
@@ -1404,6 +1385,11 @@ do_am_printer(http_t *http,		/* I - HTTP connection */
 
     if (file)
       ippDelete(cupsDoFileRequest(http, request, "/admin/", file->tempfile));
+    else if (evefile[0])
+    {
+      ippDelete(cupsDoFileRequest(http, request, "/admin/", evefile));
+      unlink(evefile);
+    }
     else
       ippDelete(cupsDoRequest(http, request, "/admin/"));
 
@@ -1881,7 +1867,7 @@ do_config_server(http_t *http)		/* I - HTTP connection */
         if ((end = strstr(start, "\n")) == NULL)
 	  end = start + strlen(start);
 
-      cupsFileWrite(temp, start, end - start);
+      cupsFileWrite(temp, start, (size_t)(end - start));
       cupsFilePutChar(temp, '\n');
 
       if (*end == '\r')
@@ -1917,7 +1903,7 @@ do_config_server(http_t *http)		/* I - HTTP connection */
     }
     else
     {
-      cgiSetVariable("refresh_page", "5;URL=/admin/?OP=redirect");
+      cgiSetVariable("refresh_page", "5;URL=/admin/");
 
       cgiStartHTML(cgiText(_("Edit Configuration File")));
       cgiCopyTemplateLang("restart.tmpl");
@@ -2006,9 +1992,9 @@ do_config_server(http_t *http)		/* I - HTTP connection */
     * Allocate memory and load the file into a string buffer...
     */
 
-    if ((buffer = calloc(1, info.st_size + 1)) != NULL)
+    if ((buffer = calloc(1, (size_t)info.st_size + 1)) != NULL)
     {
-      cupsFileRead(cupsd, buffer, info.st_size);
+      cupsFileRead(cupsd, buffer, (size_t)info.st_size);
       cgiSetVariable("CUPSDCONF", buffer);
       free(buffer);
     }
@@ -2025,7 +2011,7 @@ do_config_server(http_t *http)		/* I - HTTP connection */
     if (!stat(filename, &info) && info.st_size < (1024 * 1024) &&
         (cupsd = cupsFileOpen(filename, "r")) != NULL)
     {
-      if ((buffer = calloc(1, 2 * info.st_size + 1)) != NULL)
+      if ((buffer = calloc(1, 2 * (size_t)info.st_size + 1)) != NULL)
       {
 	bufend = buffer + 2 * info.st_size - 1;
 
@@ -2035,7 +2021,7 @@ do_config_server(http_t *http)		/* I - HTTP connection */
 	  if (ch == '\\' || ch == '\"')
 	  {
 	    *bufptr++ = '\\';
-	    *bufptr++ = ch;
+	    *bufptr++ = (char)ch;
 	  }
 	  else if (ch == '\n')
 	  {
@@ -2048,7 +2034,7 @@ do_config_server(http_t *http)		/* I - HTTP connection */
 	    *bufptr++ = 't';
 	  }
 	  else if (ch >= ' ')
-	    *bufptr++ = ch;
+	    *bufptr++ = (char)ch;
 	}
 
 	*bufptr = '\0';
@@ -3882,7 +3868,7 @@ do_set_sharing(http_t *http)		/* I - HTTP connection */
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri",
                NULL, uri);
 
-  ippAddBoolean(request, IPP_TAG_OPERATION, "printer-is-shared", atoi(shared));
+  ippAddBoolean(request, IPP_TAG_OPERATION, "printer-is-shared", (char)atoi(shared));
 
  /*
   * Do the request and get back a response...
@@ -4096,7 +4082,7 @@ get_option_value(
       if ((val = cgiGetVariable(keyword)) == NULL)
 	return (NULL);
 
-      snprintf(bufptr, bufend - bufptr, "%s%s=", prefix, cparam->name);
+      snprintf(bufptr, (size_t)(bufend - bufptr), "%s%s=", prefix, cparam->name);
       bufptr += strlen(bufptr);
       prefix = " ";
 
@@ -4110,7 +4096,7 @@ get_option_value(
 		number > cparam->maximum.custom_real)
 	      return (NULL);
 
-	    snprintf(bufptr, bufend - bufptr, "%g", number);
+	    snprintf(bufptr, (size_t)(bufend - bufptr), "%g", number);
 	    break;
 
 	case PPD_CUSTOM_INT :
@@ -4120,7 +4106,7 @@ get_option_value(
 		integer > cparam->maximum.custom_int)
 	      return (NULL);
 
-	    snprintf(bufptr, bufend - bufptr, "%ld", integer);
+	    snprintf(bufptr, (size_t)(bufend - bufptr), "%ld", integer);
 	    break;
 
 	case PPD_CUSTOM_POINTS :
@@ -4138,7 +4124,7 @@ get_option_value(
 		number_points > cparam->maximum.custom_points)
 	      return (NULL);
 
-	    snprintf(bufptr, bufend - bufptr, "%g%s", number, uval);
+	    snprintf(bufptr, (size_t)(bufend - bufptr), "%g%s", number, uval);
 	    break;
 
 	case PPD_CUSTOM_PASSCODE :
@@ -4187,7 +4173,7 @@ get_option_value(
     if (bufptr == buffer || (bufend - bufptr) < 2)
       return (NULL);
 
-    strcpy(bufptr, "}");
+    memcpy(bufptr, "}", 2);
   }
 
   return (buffer);
@@ -4218,5 +4204,78 @@ get_points(double     number,		/* I - Original number */
 
 
 /*
- * End of "$Id: admin.c 11173 2013-07-23 12:31:34Z msweet $".
+ * 'get_printer_ppd()' - Get an IPP Everywhere PPD file for the given URI.
+ */
+
+static char *				/* O - Filename or NULL */
+get_printer_ppd(const char *uri,	/* I - Printer URI */
+                char       *buffer,	/* I - Filename buffer */
+		size_t     bufsize)	/* I - Size of filename buffer */
+{
+  http_t	*http;			/* Connection to printer */
+  ipp_t		*request,		/* Get-Printer-Attributes request */
+		*response;		/* Get-Printer-Attributes response */
+  char		resolved[1024],		/* Resolved URI */
+		scheme[32],		/* URI scheme */
+		userpass[256],		/* Username:password */
+		host[256],		/* Hostname */
+		resource[256];		/* Resource path */
+  int		port;			/* Port number */
+
+
+ /*
+  * Connect to the printer...
+  */
+
+  if (strstr(uri, "._tcp"))
+  {
+   /*
+    * Resolve URI...
+    */
+
+    if (!_httpResolveURI(uri, resolved, sizeof(resolved), _HTTP_RESOLVE_DEFAULT, NULL, NULL))
+    {
+      fprintf(stderr, "ERROR: Unable to resolve \"%s\".\n", uri);
+      return (NULL);
+    }
+
+    uri = resolved;
+  }
+
+  if (httpSeparateURI(HTTP_URI_CODING_ALL, uri, scheme, sizeof(scheme), userpass, sizeof(userpass), host, sizeof(host), &port, resource, sizeof(resource)) < HTTP_URI_STATUS_OK)
+  {
+    fprintf(stderr, "ERROR: Bad printer URI \"%s\".\n", uri);
+    return (NULL);
+  }
+
+  http = httpConnect2(host, port, NULL, AF_UNSPEC, !strcmp(scheme, "ipps") ? HTTP_ENCRYPTION_ALWAYS : HTTP_ENCRYPTION_IF_REQUESTED, 1, 30000, NULL);
+  if (!http)
+  {
+    fprintf(stderr, "ERROR: Unable to connect to \"%s:%d\": %s\n", host, port, cupsLastErrorString());
+    return (NULL);
+  }
+
+ /*
+  * Send a Get-Printer-Attributes request...
+  */
+
+  request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
+  response = cupsDoRequest(http, request, resource);
+
+  if (!_ppdCreateFromIPP(buffer, bufsize, response))
+    fprintf(stderr, "ERROR: Unable to create PPD file: %s\n", strerror(errno));
+
+  ippDelete(response);
+  httpClose(http);
+
+  if (buffer[0])
+    return (buffer);
+  else
+    return (NULL);
+}
+
+
+/*
+ * End of "$Id: admin.c 12516 2015-02-12 20:18:11Z msweet $".
  */

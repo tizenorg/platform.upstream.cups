@@ -1,30 +1,38 @@
 dnl
-dnl "$Id: cups-common.m4 8781 2009-08-28 17:34:54Z mike $"
+dnl "$Id: cups-common.m4 12852 2015-08-28 13:29:21Z msweet $"
 dnl
-dnl   Common configuration stuff for CUPS.
+dnl Common configuration stuff for CUPS.
 dnl
-dnl   Copyright 2007-2013 by Apple Inc.
-dnl   Copyright 1997-2007 by Easy Software Products, all rights reserved.
+dnl Copyright 2007-2015 by Apple Inc.
+dnl Copyright 1997-2007 by Easy Software Products, all rights reserved.
 dnl
-dnl   These coded instructions, statements, and computer programs are the
-dnl   property of Apple Inc. and are protected by Federal copyright
-dnl   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
-dnl   which should have been included with this file.  If this file is
-dnl   file is missing or damaged, see the license at "http://www.cups.org/".
+dnl These coded instructions, statements, and computer programs are the
+dnl property of Apple Inc. and are protected by Federal copyright
+dnl law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+dnl which should have been included with this file.  If this file is
+dnl file is missing or damaged, see the license at "http://www.cups.org/".
 dnl
-
-dnl We need at least autoconf 2.60...
-AC_PREREQ(2.60)
 
 dnl Set the name of the config header file...
 AC_CONFIG_HEADER(config.h)
 
 dnl Version number information...
-CUPS_VERSION=1.6.4
-CUPS_REVISION=
-#if test -z "$CUPS_REVISION" -a -d .svn; then
-#	CUPS_REVISION="-r`svnversion . | awk -F: '{print $NF}' | sed -e '1,$s/[[a-zA-Z]]*//g'`"
-#fi
+CUPS_VERSION=2.1.2
+
+case "$CUPS_VERSION" in
+	*svn)
+		if test -z "$CUPS_REVISION" -a -d .svn; then
+			CUPS_REVISION="-r`svnversion . | awk -F: '{print $NF}' | sed -e '1,$s/[[a-zA-Z]]*//g'`"
+		else
+			CUPS_REVISION=""
+		fi
+		;;
+
+	*)
+		CUPS_REVISION=""
+		;;
+esac
+
 CUPS_BUILD="cups-$CUPS_VERSION"
 
 AC_ARG_WITH(cups_build, [  --with-cups-build       set "cups-config --build" string ],
@@ -33,8 +41,8 @@ AC_ARG_WITH(cups_build, [  --with-cups-build       set "cups-config --build" str
 AC_SUBST(CUPS_VERSION)
 AC_SUBST(CUPS_REVISION)
 AC_SUBST(CUPS_BUILD)
-AC_DEFINE_UNQUOTED(CUPS_SVERSION, "CUPS v$CUPS_VERSION$CUPS_REVISION")
-AC_DEFINE_UNQUOTED(CUPS_MINIMAL, "CUPS/$CUPS_VERSION$CUPS_REVISION")
+AC_DEFINE_UNQUOTED(CUPS_SVERSION, "AC_PACKAGE_NAME v$CUPS_VERSION$CUPS_REVISION")
+AC_DEFINE_UNQUOTED(CUPS_MINIMAL, "AC_PACKAGE_NAME/$CUPS_VERSION$CUPS_REVISION")
 
 dnl Default compiler flags...
 CFLAGS="${CFLAGS:=}"
@@ -89,7 +97,7 @@ fi
 AC_SUBST(INSTALLSTATIC)
 
 dnl Check for pkg-config, which is used for some other tests later on...
-AC_PATH_PROG(PKGCONFIG, pkg-config)
+AC_PATH_TOOL(PKGCONFIG, pkg-config)
 
 dnl Check for libraries...
 AC_SEARCH_LIBS(abs, m, AC_DEFINE(HAVE_ABS))
@@ -134,17 +142,19 @@ AC_CHECK_HEADER(stdint.h,AC_DEFINE(HAVE_STDINT_H))
 AC_CHECK_HEADER(string.h,AC_DEFINE(HAVE_STRING_H))
 AC_CHECK_HEADER(strings.h,AC_DEFINE(HAVE_STRINGS_H))
 AC_CHECK_HEADER(bstring.h,AC_DEFINE(HAVE_BSTRING_H))
-AC_CHECK_HEADER(usersec.h,AC_DEFINE(HAVE_USERSEC_H))
 AC_CHECK_HEADER(sys/ioctl.h,AC_DEFINE(HAVE_SYS_IOCTL_H))
 AC_CHECK_HEADER(sys/param.h,AC_DEFINE(HAVE_SYS_PARAM_H))
 AC_CHECK_HEADER(sys/ucred.h,AC_DEFINE(HAVE_SYS_UCRED_H))
-AC_CHECK_HEADER(scsi/sg.h,AC_DEFINE(HAVE_SCSI_SG_H))
+AC_CHECK_HEADER(asl.h,AC_DEFINE(HAVE_ASL_H))
 
 dnl Checks for iconv.h and iconv_open
 AC_CHECK_HEADER(iconv.h,
 	SAVELIBS="$LIBS"
 	LIBS=""
 	AC_SEARCH_LIBS(iconv_open,iconv,
+		AC_DEFINE(HAVE_ICONV_H)
+		SAVELIBS="$SAVELIBS $LIBS")
+	AC_SEARCH_LIBS(libiconv_open,iconv,
 		AC_DEFINE(HAVE_ICONV_H)
 		SAVELIBS="$SAVELIBS $LIBS")
 	LIBS="$SAVELIBS")
@@ -202,6 +212,9 @@ AC_CHECK_FUNCS(sigaction)
 dnl Checks for wait functions.
 AC_CHECK_FUNCS(waitpid wait3)
 
+dnl Check for posix_spawn
+AC_CHECK_FUNCS(posix_spawn)
+
 dnl See if the tm structure has the tm_gmtoff member...
 AC_MSG_CHECKING(for tm_gmtoff member in tm structure)
 AC_TRY_COMPILE([#include <time.h>],[struct tm t;
@@ -230,7 +243,7 @@ AC_SUBST(LIBUSB)
 AC_SUBST(USBQUIRKS)
 
 if test "x$PKGCONFIG" != x; then
-	if test x$enable_libusb = xyes -o $uname != Darwin; then
+	if test x$enable_libusb != xno -a $uname != Darwin; then
 		AC_MSG_CHECKING(for libusb-1.0)
 		if $PKGCONFIG --exists libusb-1.0; then
 			AC_MSG_RESULT(yes)
@@ -240,6 +253,9 @@ if test "x$PKGCONFIG" != x; then
 			USBQUIRKS="\$(DATADIR)/usb"
 		else
 			AC_MSG_RESULT(no)
+			if test x$enable_libusb = xyes; then
+				AC_MSG_ERROR(libusb required for --enable-libusb.)
+			fi
 		fi
 	fi
 elif test x$enable_libusb = xyes; then
@@ -267,6 +283,7 @@ AC_CHECK_HEADER(zlib.h,
 	AC_DEFINE(HAVE_LIBZ)
 	LIBZ="-lz"
 	LIBS="$LIBS -lz"
+	AC_CHECK_LIB(z, inflateCopy, AC_DEFINE(HAVE_INFLATECOPY))
 	if test "x$GZIP" != z; then
 		INSTALL_GZIP="-z"
 	fi))
@@ -302,20 +319,15 @@ fi
 LIBS="$SAVELIBS"
 
 dnl Check for DBUS support
-if test -d /etc/dbus-1; then
-	DBUSDIR="/etc/dbus-1"
-else
-	DBUSDIR=""
-fi
-
-AC_ARG_ENABLE(dbus, [  --enable-dbus           build with DBUS support])
+AC_ARG_ENABLE(dbus, [  --disable-dbus           build without DBUS support])
 AC_ARG_WITH(dbusdir, [  --with-dbusdir          set DBUS configuration directory ],
 	DBUSDIR="$withval")
 
+DBUSDIR=""
 DBUS_NOTIFIER=""
 DBUS_NOTIFIERLIBS=""
 
-if test "x$enable_dbus" != xno -a "x$PKGCONFIG" != x; then
+if test "x$enable_dbus" != xno -a "x$PKGCONFIG" != x -a "x$uname" != xDarwin; then
 	AC_MSG_CHECKING(for DBUS)
 	if $PKGCONFIG --exists dbus-1; then
 		AC_MSG_RESULT(yes)
@@ -328,7 +340,12 @@ if test "x$enable_dbus" != xno -a "x$PKGCONFIG" != x; then
 		LIBS="$LIBS $DBUS_NOTIFIERLIBS"
 		AC_CHECK_FUNC(dbus_message_iter_init_append,
 			      AC_DEFINE(HAVE_DBUS_MESSAGE_ITER_INIT_APPEND))
+		AC_CHECK_FUNC(dbus_threads_init,
+			      AC_DEFINE(HAVE_DBUS_THREADS_INIT))
 		LIBS="$SAVELIBS"
+		if test -d /etc/dbus-1; then
+			DBUSDIR="/etc/dbus-1"
+		fi
 	else
 		AC_MSG_RESULT(no)
 	fi
@@ -355,7 +372,6 @@ case $uname in
 		AC_CHECK_HEADER(CoreFoundation/CoreFoundation.h,AC_DEFINE(HAVE_COREFOUNDATION_H))
 		AC_CHECK_HEADER(CoreFoundation/CFPriv.h,AC_DEFINE(HAVE_CFPRIV_H))
 		AC_CHECK_HEADER(CoreFoundation/CFBundlePriv.h,AC_DEFINE(HAVE_CFBUNDLEPRIV_H))
-		AC_CHECK_HEADER(IOKit/pwr_mgt/IOPMLibPrivate.h,AC_DEFINE(HAVE_IOKIT_PWR_MGT_IOPMLIBPRIVATE_H))
 
 		dnl Check for dynamic store function...
 		AC_CHECK_FUNCS(SCDynamicStoreCopyComputerName)
@@ -364,9 +380,6 @@ case $uname in
 		AC_CHECK_HEADER(membership.h,AC_DEFINE(HAVE_MEMBERSHIP_H))
 		AC_CHECK_HEADER(membershipPriv.h,AC_DEFINE(HAVE_MEMBERSHIPPRIV_H))
 		AC_CHECK_FUNCS(mbr_uid_to_uuid)
-
-                dnl Check for the vproc_transaction_begin/end stuff...
-		AC_CHECK_FUNCS(vproc_transaction_begin)
 
 		dnl Need <dlfcn.h> header...
 		AC_CHECK_HEADER(dlfcn.h,AC_DEFINE(HAVE_DLFCN_H))
@@ -461,5 +474,5 @@ esac
 AC_SUBST(BUILDDIRS)
 
 dnl
-dnl End of "$Id: cups-common.m4 8781 2009-08-28 17:34:54Z mike $".
+dnl End of "$Id: cups-common.m4 12852 2015-08-28 13:29:21Z msweet $".
 dnl

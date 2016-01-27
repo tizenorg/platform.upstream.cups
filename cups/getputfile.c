@@ -1,25 +1,18 @@
 /*
- * "$Id: getputfile.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: getputfile.c 11558 2014-02-06 18:33:34Z msweet $"
  *
- *   Get/put file functions for CUPS.
+ * Get/put file functions for CUPS.
  *
- *   Copyright 2007-2012 by Apple Inc.
- *   Copyright 1997-2006 by Easy Software Products.
+ * Copyright 2007-2014 by Apple Inc.
+ * Copyright 1997-2006 by Easy Software Products.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  *
- *   This file is subject to the Apple OS-Developed Software exception.
- *
- * Contents:
- *
- *   cupsGetFd()   - Get a file from the server.
- *   cupsGetFile() - Get a file from the server.
- *   cupsPutFd()   - Put a file on the server.
- *   cupsPutFile() - Put a file on the server.
+ * This file is subject to the Apple OS-Developed Software exception.
  */
 
 /*
@@ -39,7 +32,7 @@
 /*
  * 'cupsGetFd()' - Get a file from the server.
  *
- * This function returns @code HTTP_OK@ when the file is successfully retrieved.
+ * This function returns @code HTTP_STATUS_OK@ when the file is successfully retrieved.
  *
  * @since CUPS 1.1.20/OS X 10.4@
  */
@@ -49,7 +42,7 @@ cupsGetFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
 	  const char *resource,		/* I - Resource name */
 	  int        fd)		/* I - File descriptor */
 {
-  int		bytes;			/* Number of bytes read */
+  ssize_t	bytes;			/* Number of bytes read */
   char		buffer[8192];		/* Buffer for file */
   http_status_t	status;			/* HTTP status from server */
   char		if_modified_since[HTTP_MAX_VALUE];
@@ -68,12 +61,12 @@ cupsGetFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
     if (http)
       http->error = EINVAL;
 
-    return (HTTP_ERROR);
+    return (HTTP_STATUS_ERROR);
   }
 
   if (!http)
     if ((http = _cupsConnect()) == NULL)
-      return (HTTP_SERVICE_UNAVAILABLE);
+      return (HTTP_STATUS_SERVICE_UNAVAILABLE);
 
  /*
   * Then send GET requests to the HTTP server...
@@ -84,27 +77,37 @@ cupsGetFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
 
   do
   {
+    if (!_cups_strcasecmp(httpGetField(http, HTTP_FIELD_CONNECTION), "close"))
+    {
+      httpClearFields(http);
+      if (httpReconnect2(http, 30000, NULL))
+      {
+	status = HTTP_STATUS_ERROR;
+	break;
+      }
+    }
+
     httpClearFields(http);
     httpSetField(http, HTTP_FIELD_AUTHORIZATION, http->authstring);
     httpSetField(http, HTTP_FIELD_IF_MODIFIED_SINCE, if_modified_since);
 
     if (httpGet(http, resource))
     {
-      if (httpReconnect(http))
+      if (httpReconnect2(http, 30000, NULL))
       {
-        status = HTTP_ERROR;
+        status = HTTP_STATUS_ERROR;
 	break;
       }
       else
       {
-        status = HTTP_UNAUTHORIZED;
+        status = HTTP_STATUS_UNAUTHORIZED;
         continue;
       }
     }
 
-    while ((status = httpUpdate(http)) == HTTP_CONTINUE);
+    while ((status = httpUpdate(http)) == HTTP_STATUS_CONTINUE);
 
-    if (status == HTTP_UNAUTHORIZED)
+    if (status == HTTP_STATUS_UNAUTHORIZED)
     {
      /*
       * Flush any error message...
@@ -118,53 +121,53 @@ cupsGetFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
 
       if (cupsDoAuthentication(http, "GET", resource))
       {
-        status = HTTP_AUTHORIZATION_CANCELED;
+        status = HTTP_STATUS_CUPS_AUTHORIZATION_CANCELED;
         break;
       }
 
-      if (httpReconnect(http))
+      if (httpReconnect2(http, 30000, NULL))
       {
-        status = HTTP_ERROR;
+        status = HTTP_STATUS_ERROR;
         break;
       }
 
       continue;
     }
 #ifdef HAVE_SSL
-    else if (status == HTTP_UPGRADE_REQUIRED)
+    else if (status == HTTP_STATUS_UPGRADE_REQUIRED)
     {
       /* Flush any error message... */
       httpFlush(http);
 
       /* Reconnect... */
-      if (httpReconnect(http))
+      if (httpReconnect2(http, 30000, NULL))
       {
-        status = HTTP_ERROR;
+        status = HTTP_STATUS_ERROR;
         break;
       }
 
       /* Upgrade with encryption... */
-      httpEncryption(http, HTTP_ENCRYPT_REQUIRED);
+      httpEncryption(http, HTTP_ENCRYPTION_REQUIRED);
 
       /* Try again, this time with encryption enabled... */
       continue;
     }
 #endif /* HAVE_SSL */
   }
-  while (status == HTTP_UNAUTHORIZED || status == HTTP_UPGRADE_REQUIRED);
+  while (status == HTTP_STATUS_UNAUTHORIZED || status == HTTP_STATUS_UPGRADE_REQUIRED);
 
  /*
   * See if we actually got the file or an error...
   */
 
-  if (status == HTTP_OK)
+  if (status == HTTP_STATUS_OK)
   {
    /*
     * Yes, copy the file...
     */
 
     while ((bytes = httpRead2(http, buffer, sizeof(buffer))) > 0)
-      write(fd, buffer, bytes);
+      write(fd, buffer, (size_t)bytes);
   }
   else
   {
@@ -185,7 +188,7 @@ cupsGetFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
 /*
  * 'cupsGetFile()' - Get a file from the server.
  *
- * This function returns @code HTTP_OK@ when the file is successfully retrieved.
+ * This function returns @code HTTP_STATUS_OK@ when the file is successfully retrieved.
  *
  * @since CUPS 1.1.20/OS X 10.4@
  */
@@ -208,7 +211,7 @@ cupsGetFile(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DE
     if (http)
       http->error = EINVAL;
 
-    return (HTTP_ERROR);
+    return (HTTP_STATUS_ERROR);
   }
 
  /*
@@ -223,7 +226,7 @@ cupsGetFile(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DE
 
     http->error = errno;
 
-    return (HTTP_ERROR);
+    return (HTTP_STATUS_ERROR);
   }
 
  /*
@@ -238,7 +241,7 @@ cupsGetFile(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DE
 
   close(fd);
 
-  if (status != HTTP_OK)
+  if (status != HTTP_STATUS_OK)
     unlink(filename);
 
  /*
@@ -252,7 +255,7 @@ cupsGetFile(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DE
 /*
  * 'cupsPutFd()' - Put a file on the server.
  *
- * This function returns @code HTTP_CREATED@ when the file is stored
+ * This function returns @code HTTP_STATUS_CREATED@ when the file is stored
  * successfully.
  *
  * @since CUPS 1.1.20/OS X 10.4@
@@ -263,8 +266,8 @@ cupsPutFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
           const char *resource,		/* I - Resource name */
 	  int        fd)		/* I - File descriptor */
 {
-  int		bytes,			/* Number of bytes read */
-		retries;		/* Number of retries */
+  ssize_t	bytes;			/* Number of bytes read */
+  int		retries;		/* Number of retries */
   char		buffer[8192];		/* Buffer for file */
   http_status_t	status;			/* HTTP status from server */
 
@@ -281,12 +284,12 @@ cupsPutFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
     if (http)
       http->error = EINVAL;
 
-    return (HTTP_ERROR);
+    return (HTTP_STATUS_ERROR);
   }
 
   if (!http)
     if ((http = _cupsConnect()) == NULL)
-      return (HTTP_SERVICE_UNAVAILABLE);
+      return (HTTP_STATUS_SERVICE_UNAVAILABLE);
 
  /*
   * Then send PUT requests to the HTTP server...
@@ -296,24 +299,34 @@ cupsPutFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
 
   do
   {
+    if (!_cups_strcasecmp(httpGetField(http, HTTP_FIELD_CONNECTION), "close"))
+    {
+      httpClearFields(http);
+      if (httpReconnect2(http, 30000, NULL))
+      {
+	status = HTTP_STATUS_ERROR;
+	break;
+      }
+    }
+
     DEBUG_printf(("2cupsPutFd: starting attempt, authstring=\"%s\"...",
                   http->authstring));
 
     httpClearFields(http);
     httpSetField(http, HTTP_FIELD_AUTHORIZATION, http->authstring);
     httpSetField(http, HTTP_FIELD_TRANSFER_ENCODING, "chunked");
-    httpSetExpect(http, HTTP_CONTINUE);
+    httpSetExpect(http, HTTP_STATUS_CONTINUE);
 
     if (httpPut(http, resource))
     {
-      if (httpReconnect(http))
+      if (httpReconnect2(http, 30000, NULL))
       {
-        status = HTTP_ERROR;
+        status = HTTP_STATUS_ERROR;
 	break;
       }
       else
       {
-        status = HTTP_UNAUTHORIZED;
+        status = HTTP_STATUS_UNAUTHORIZED;
         continue;
       }
     }
@@ -325,9 +338,9 @@ cupsPutFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
     if (httpWait(http, 1000))
       status = httpUpdate(http);
     else
-      status = HTTP_CONTINUE;
+      status = HTTP_STATUS_CONTINUE;
 
-    if (status == HTTP_CONTINUE)
+    if (status == HTTP_STATUS_CONTINUE)
     {
      /*
       * Copy the file...
@@ -338,21 +351,21 @@ cupsPutFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
       while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
 	if (httpCheck(http))
 	{
-          if ((status = httpUpdate(http)) != HTTP_CONTINUE)
+          if ((status = httpUpdate(http)) != HTTP_STATUS_CONTINUE)
             break;
 	}
 	else
-          httpWrite2(http, buffer, bytes);
+          httpWrite2(http, buffer, (size_t)bytes);
     }
 
-    if (status == HTTP_CONTINUE)
+    if (status == HTTP_STATUS_CONTINUE)
     {
       httpWrite2(http, buffer, 0);
 
-      while ((status = httpUpdate(http)) == HTTP_CONTINUE);
+      while ((status = httpUpdate(http)) == HTTP_STATUS_CONTINUE);
     }
 
-    if (status == HTTP_ERROR && !retries)
+    if (status == HTTP_STATUS_ERROR && !retries)
     {
       DEBUG_printf(("2cupsPutFd: retry on status %d", status));
 
@@ -362,9 +375,9 @@ cupsPutFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
       httpFlush(http);
 
       /* Reconnect... */
-      if (httpReconnect(http))
+      if (httpReconnect2(http, 30000, NULL))
       {
-        status = HTTP_ERROR;
+        status = HTTP_STATUS_ERROR;
         break;
       }
 
@@ -374,7 +387,7 @@ cupsPutFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
 
     DEBUG_printf(("2cupsPutFd: status=%d", status));
 
-    if (status == HTTP_UNAUTHORIZED)
+    if (status == HTTP_STATUS_UNAUTHORIZED)
     {
      /*
       * Flush any error message...
@@ -388,47 +401,47 @@ cupsPutFd(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DEFA
 
       if (cupsDoAuthentication(http, "PUT", resource))
       {
-        status = HTTP_AUTHORIZATION_CANCELED;
+        status = HTTP_STATUS_CUPS_AUTHORIZATION_CANCELED;
         break;
       }
 
-      if (httpReconnect(http))
+      if (httpReconnect2(http, 30000, NULL))
       {
-        status = HTTP_ERROR;
+        status = HTTP_STATUS_ERROR;
         break;
       }
 
       continue;
     }
 #ifdef HAVE_SSL
-    else if (status == HTTP_UPGRADE_REQUIRED)
+    else if (status == HTTP_STATUS_UPGRADE_REQUIRED)
     {
       /* Flush any error message... */
       httpFlush(http);
 
       /* Reconnect... */
-      if (httpReconnect(http))
+      if (httpReconnect2(http, 30000, NULL))
       {
-        status = HTTP_ERROR;
+        status = HTTP_STATUS_ERROR;
         break;
       }
 
       /* Upgrade with encryption... */
-      httpEncryption(http, HTTP_ENCRYPT_REQUIRED);
+      httpEncryption(http, HTTP_ENCRYPTION_REQUIRED);
 
       /* Try again, this time with encryption enabled... */
       continue;
     }
 #endif /* HAVE_SSL */
   }
-  while (status == HTTP_UNAUTHORIZED || status == HTTP_UPGRADE_REQUIRED ||
-         (status == HTTP_ERROR && retries < 2));
+  while (status == HTTP_STATUS_UNAUTHORIZED || status == HTTP_STATUS_UPGRADE_REQUIRED ||
+         (status == HTTP_STATUS_ERROR && retries < 2));
 
  /*
   * See if we actually put the file or an error...
   */
 
-  if (status != HTTP_CREATED)
+  if (status != HTTP_STATUS_CREATED)
   {
     _cupsSetHTTPError(status);
     httpFlush(http);
@@ -467,7 +480,7 @@ cupsPutFile(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DE
     if (http)
       http->error = EINVAL;
 
-    return (HTTP_ERROR);
+    return (HTTP_STATUS_ERROR);
   }
 
  /*
@@ -482,7 +495,7 @@ cupsPutFile(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DE
 
     http->error = errno;
 
-    return (HTTP_ERROR);
+    return (HTTP_STATUS_ERROR);
   }
 
  /*
@@ -498,5 +511,5 @@ cupsPutFile(http_t     *http,		/* I - Connection to server or @code CUPS_HTTP_DE
 
 
 /*
- * End of "$Id: getputfile.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: getputfile.c 11558 2014-02-06 18:33:34Z msweet $".
  */

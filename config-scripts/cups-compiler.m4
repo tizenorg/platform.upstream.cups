@@ -1,16 +1,16 @@
 dnl
-dnl "$Id: cups-compiler.m4 7871 2008-08-27 21:12:43Z mike $"
+dnl "$Id: cups-compiler.m4 12742 2015-06-23 14:48:53Z msweet $"
 dnl
-dnl   Compiler stuff for CUPS.
+dnl Compiler stuff for CUPS.
 dnl
-dnl   Copyright 2007-2012 by Apple Inc.
-dnl   Copyright 1997-2007 by Easy Software Products, all rights reserved.
+dnl Copyright 2007-2014 by Apple Inc.
+dnl Copyright 1997-2007 by Easy Software Products, all rights reserved.
 dnl
-dnl   These coded instructions, statements, and computer programs are the
-dnl   property of Apple Inc. and are protected by Federal copyright
-dnl   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
-dnl   which should have been included with this file.  If this file is
-dnl   file is missing or damaged, see the license at "http://www.cups.org/".
+dnl These coded instructions, statements, and computer programs are the
+dnl property of Apple Inc. and are protected by Federal copyright
+dnl law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+dnl which should have been included with this file.  If this file is
+dnl file is missing or damaged, see the license at "http://www.cups.org/".
 dnl
 
 dnl Clear the debugging and non-shared library options unless the user asks
@@ -103,57 +103,89 @@ if test -n "$GCC"; then
 	fi
 
 	# Generate position-independent code as needed...
-	if test $PICFLAG = 1 -a $uname != AIX; then
+	if test $PICFLAG = 1; then
     		OPTIM="-fPIC $OPTIM"
 	fi
 
 	# The -fstack-protector option is available with some versions of
 	# GCC and adds "stack canaries" which detect when the return address
 	# has been overwritten, preventing many types of exploit attacks.
-	AC_MSG_CHECKING(if GCC supports -fstack-protector)
+	AC_MSG_CHECKING(whether compiler supports -fstack-protector)
 	OLDCFLAGS="$CFLAGS"
 	CFLAGS="$CFLAGS -fstack-protector"
 	AC_TRY_LINK(,,
-		OPTIM="$OPTIM -fstack-protector"
+		if test "x$LSB_BUILD" = xy; then
+			# Can't use stack-protector with LSB binaries...
+			OPTIM="$OPTIM -fno-stack-protector"
+		else
+			OPTIM="$OPTIM -fstack-protector"
+		fi
 		AC_MSG_RESULT(yes),
 		AC_MSG_RESULT(no))
 	CFLAGS="$OLDCFLAGS"
 
-	# The -fPIE option is available with some versions of GCC and adds
-	# randomization of addresses, which avoids another class of exploits
-	# that depend on a fixed address for common functions.
-	AC_MSG_CHECKING(if GCC supports -fPIE)
-	OLDCFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -fPIE"
-	AC_TRY_COMPILE(,,
-		[case "$CC" in
-			*clang)
-				PIEFLAGS="-fPIE -Wl,-pie"
+	if test "x$LSB_BUILD" != xy; then
+		# The -fPIE option is available with some versions of GCC and
+		# adds randomization of addresses, which avoids another class of
+		# exploits that depend on a fixed address for common functions.
+		#
+		# Not available to LSB binaries...
+		AC_MSG_CHECKING(whether compiler supports -fPIE)
+		OLDCFLAGS="$CFLAGS"
+		case "$uname" in
+			Darwin*)
+				CFLAGS="$CFLAGS -fPIE -Wl,-pie"
+				AC_TRY_COMPILE(,,[
+					PIEFLAGS="-fPIE -Wl,-pie"
+					AC_MSG_RESULT(yes)],
+					AC_MSG_RESULT(no))
 				;;
+
 			*)
-				PIEFLAGS="-fPIE -pie"
+				CFLAGS="$CFLAGS -fPIE -pie"
+				AC_TRY_COMPILE(,,[
+					PIEFLAGS="-fPIE -pie"
+					AC_MSG_RESULT(yes)],
+					AC_MSG_RESULT(no))
 				;;
 		esac
-		AC_MSG_RESULT(yes)],
-		AC_MSG_RESULT(no))
-	CFLAGS="$OLDCFLAGS"
+		CFLAGS="$OLDCFLAGS"
+	fi
 
 	if test "x$with_optim" = x; then
 		# Add useful warning options for tracking down problems...
 		OPTIM="-Wall -Wno-format-y2k -Wunused $OPTIM"
 
+		AC_MSG_CHECKING(whether compiler supports -Wno-unused-result)
+		OLDCFLAGS="$CFLAGS"
+		CFLAGS="$CFLAGS -Werror -Wno-unused-result"
+		AC_TRY_COMPILE(,,
+			[OPTIM="$OPTIM -Wno-unused-result"
+			AC_MSG_RESULT(yes)],
+			AC_MSG_RESULT(no))
+		CFLAGS="$OLDCFLAGS"
+
+		AC_MSG_CHECKING(whether compiler supports -Wsign-conversion)
+		OLDCFLAGS="$CFLAGS"
+		CFLAGS="$CFLAGS -Werror -Wsign-conversion"
+		AC_TRY_COMPILE(,,
+			[OPTIM="$OPTIM -Wsign-conversion"
+			AC_MSG_RESULT(yes)],
+			AC_MSG_RESULT(no))
+		CFLAGS="$OLDCFLAGS"
+
+		AC_MSG_CHECKING(whether compiler supports -Wno-tautological-compare)
+		OLDCFLAGS="$CFLAGS"
+		CFLAGS="$CFLAGS -Werror -Wno-tautological-compare"
+		AC_TRY_COMPILE(,,
+			[OPTIM="$OPTIM -Wno-tautological-compare"
+			AC_MSG_RESULT(yes)],
+			AC_MSG_RESULT(no))
+		CFLAGS="$OLDCFLAGS"
+
 		# Additional warning options for development testing...
 		if test -d .svn; then
-			OPTIM="-Wshadow -Werror $OPTIM"
-		else
-			AC_MSG_CHECKING(if GCC supports -Wno-tautological-compare)
-			OLDCFLAGS="$CFLAGS"
-			CFLAGS="$CFLAGS -Werror -Wno-tautological-compare"
-			AC_TRY_COMPILE(,,
-				[OPTIM="$OPTIM -Wno-tautological-compare"
-				AC_MSG_RESULT(yes)],
-				AC_MSG_RESULT(no))
-			CFLAGS="$OLDCFLAGS"
+			OPTIM="-Werror $OPTIM"
 		fi
 	fi
 
@@ -171,60 +203,13 @@ if test -n "$GCC"; then
 			# The -z relro option is provided by the Linux linker command to
 			# make relocatable data read-only.
 			if test x$enable_relro = xyes; then
-				RELROFLAGS="-Wl,-z,relro"
+				RELROFLAGS="-Wl,-z,relro,-z,now"
 			fi
 			;;
 	esac
 else
 	# Add vendor-specific compiler options...
 	case $uname in
-		AIX*)
-			if test -z "$OPTIM"; then
-				if test "x$with_optim" = x; then
-					OPTIM="-O2 -qmaxmem=6000"
-				else
-					OPTIM="$with_optim $OPTIM"
-				fi
-			fi
-			;;
-		HP-UX*)
-			if test -z "$OPTIM"; then
-				if test "x$with_optim" = x; then
-					OPTIM="+O2"
-				else
-					OPTIM="$with_optim $OPTIM"
-				fi
-			fi
-
-			CFLAGS="-Ae $CFLAGS"
-
-			if test $PICFLAG = 1; then
-				OPTIM="+z $OPTIM"
-			fi
-			;;
-        	IRIX)
-			if test -z "$OPTIM"; then
-				if test "x$with_optim" = x; then
-					OPTIM="-O2"
-				else
-					OPTIM="$with_optim $OPTIM"
-				fi
-			fi
-
-			if test "x$with_optim" = x; then
-				OPTIM="-fullwarn -woff 1183,1209,1349,1506,3201 $OPTIM"
-			fi
-			;;
-		OSF*)
-			# Tru64 UNIX aka Digital UNIX aka OSF/1
-			if test -z "$OPTIM"; then
-				if test "x$with_optim" = x; then
-					OPTIM="-O"
-				else
-					OPTIM="$with_optim"
-				fi
-			fi
-			;;
 		SunOS*)
 			# Solaris
 			if test -z "$OPTIM"; then
@@ -239,26 +224,12 @@ else
 				OPTIM="-KPIC $OPTIM"
 			fi
 			;;
-		UNIX_SVR*)
-			# UnixWare
-			if test -z "$OPTIM"; then
-				if test "x$with_optim" = x; then
-					OPTIM="-O"
-				else
-					OPTIM="$with_optim $OPTIM"
-				fi
-			fi
-
-			if test $PICFLAG = 1; then
-				OPTIM="-KPIC $OPTIM"
-			fi
-			;;
 		*)
 			# Running some other operating system; inform the user they
 			# should contribute the necessary options to
 			# cups-support@cups.org...
 			echo "Building CUPS with default compiler optimizations; contact"
-			echo "cups-bugs@cups.org with uname and compiler options needed"
+			echo "cups-devel@cups.org with uname and compiler options needed"
 			echo "for your platform, or set the CFLAGS and LDFLAGS environment"
 			echo "variables before running configure."
 			;;
@@ -267,33 +238,13 @@ fi
 
 # Add general compiler options per platform...
 case $uname in
-	HP-UX*)
-		# HP-UX 10.20 (at least) needs this definition to get the
-		# h_errno global...
-		OPTIM="$OPTIM -D_XOPEN_SOURCE_EXTENDED"
-
-		# HP-UX 11.00 (at least) needs this definition to get the
-		# u_short type used by the IP headers...
-		OPTIM="$OPTIM -D_INCLUDE_HPUX_SOURCE"
-
-		# HP-UX 11.23 (at least) needs this definition to get the
-		# IPv6 header to work...
-		OPTIM="$OPTIM -D_HPUX_SOURCE"
-		;;
-
 	Linux*)
 		# glibc 2.8 and higher breaks peer credentials unless you
 		# define _GNU_SOURCE...
 		OPTIM="$OPTIM -D_GNU_SOURCE"
 		;;
-
-	OSF*)
-		# Tru64 UNIX aka Digital UNIX aka OSF/1 need to be told
-		# to be POSIX-compliant...
-		OPTIM="$OPTIM -D_XOPEN_SOURCE=500 -D_XOPEN_SOURCE_EXTENDED -D_OSF_SOURCE"
-		;;
 esac
 
 dnl
-dnl End of "$Id: cups-compiler.m4 7871 2008-08-27 21:12:43Z mike $".
+dnl End of "$Id: cups-compiler.m4 12742 2015-06-23 14:48:53Z msweet $".
 dnl

@@ -1,24 +1,17 @@
 /*
- * "$Id: snmp-supplies.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: snmp-supplies.c 12227 2014-10-21 13:42:04Z msweet $"
  *
- *   SNMP supplies functions for CUPS.
+ * SNMP supplies functions for CUPS.
  *
- *   Copyright 2008-2013 by Apple Inc.
+ * Copyright 2008-2014 by Apple Inc.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   "LICENSE" which should have been included with this file.  If this
- *   file is missing or damaged, see the license at "http://www.cups.org/".
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * "LICENSE" which should have been included with this file.  If this
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  *
- *   This file is subject to the Apple OS-Developed Software exception.
- *
- * Contents:
- *
- *   backendSNMPSupplies()   - Get the current supplies for a device.
- *   backend_init_supplies() - Initialize the supplies list.
- *   backend_walk_cb()       - Interpret the supply value responses.
- *   utf16_to_utf8()         - Convert UTF-16 text to UTF-8.
+ * This file is subject to the Apple OS-Developed Software exception.
  */
 
 /*
@@ -62,6 +55,7 @@ typedef struct				/**** Printer supply data ****/
   char	name[CUPS_SNMP_MAX_STRING],	/* Name of supply */
 	color[8];			/* Color: "#RRGGBB" or "none" */
   int	colorant,			/* Colorant index */
+	sclass,				/* Supply class */
 	type,				/* Supply type */
 	max_capacity,			/* Maximum capacity */
 	level;				/* Current level value */
@@ -147,6 +141,13 @@ static const int	prtMarkerSuppliesMaxCapacity[] =
 			prtMarkerSuppliesMaxCapacityOffset =
 			(sizeof(prtMarkerSuppliesMaxCapacity) /
 			 sizeof(prtMarkerSuppliesMaxCapacity[0]));
+			 		/* Offset to supply index */
+static const int	prtMarkerSuppliesClass[] =
+			{ CUPS_OID_prtMarkerSuppliesClass, -1 },
+					/* Class OID */
+			prtMarkerSuppliesClassOffset =
+			(sizeof(prtMarkerSuppliesClass) /
+			 sizeof(prtMarkerSuppliesClass[0]));
 			 		/* Offset to supply index */
 static const int	prtMarkerSuppliesType[] =
 			{ CUPS_OID_prtMarkerSuppliesType, -1 },
@@ -257,6 +258,9 @@ backendSNMPSupplies(
       else
         percent = 50;
 
+      if (supplies[i].sclass == CUPS_TC_receptacleThatIsFilled)
+        percent = 100 - percent;
+
       if (percent <= 5)
       {
         switch (supplies[i].type)
@@ -293,6 +297,7 @@ backendSNMPSupplies(
               else
                 new_supply_state |= CUPS_OPC_NEAR_EOL;
               break;
+#if 0 /* Because no two vendors report waste containers the same, disable SNMP reporting of same */
           case CUPS_TC_wasteInk :
           case CUPS_TC_wastePaper :
           case CUPS_TC_wasteToner :
@@ -303,6 +308,7 @@ backendSNMPSupplies(
               else
                 new_supply_state |= CUPS_WASTE_ALMOST_FULL;
               break;
+#endif /* 0 */
           case CUPS_TC_cleanerUnit :
           case CUPS_TC_fuserCleaningPad :
               if (percent <= 1)
@@ -318,9 +324,9 @@ backendSNMPSupplies(
 
       if ((supplies[i].max_capacity > 0 || (quirks & CUPS_SNMP_CAPACITY)) &&
           supplies[i].level >= 0)
-        sprintf(ptr, "%d", percent);
+        snprintf(ptr, sizeof(value) - (size_t)(ptr - value), "%d", percent);
       else
-        strcpy(ptr, "-1");
+        strlcpy(ptr, "-1", sizeof(value) - (size_t)(ptr - value));
     }
 
     fprintf(stderr, "ATTR: marker-levels=%s\n", value);
@@ -458,34 +464,34 @@ backend_init_supplies(
 		  "other",
 		  "unknown",
 		  "toner",
-		  "wasteToner",
+		  "waste-toner",
 		  "ink",
-		  "inkCartridge",
-		  "inkRibbon",
-		  "wasteInk",
+		  "ink-cartridge",
+		  "ink-ribbon",
+		  "waste-ink",
 		  "opc",
 		  "developer",
-		  "fuserOil",
-		  "solidWax",
-		  "ribbonWax",
-		  "wasteWax",
+		  "fuser-oil",
+		  "solid-wax",
+		  "ribbon-wax",
+		  "waste-wax",
 		  "fuser",
-		  "coronaWire",
-		  "fuserOilWick",
-		  "cleanerUnit",
-		  "fuserCleaningPad",
-		  "transferUnit",
-		  "tonerCartridge",
-		  "fuserOiler",
+		  "corona-wire",
+		  "fuser-oil-wick",
+		  "cleaner-unit",
+		  "fuser-cleaning-pad",
+		  "transfer-unit",
+		  "toner-cartridge",
+		  "fuser-oiler",
 		  "water",
-		  "wasteWater",
-		  "glueWaterAdditive",
-		  "wastePaper",
-		  "bindingSupply",
-		  "bandingSupply",
-		  "stitchingWire",
-		  "shrinkWrap",
-		  "paperWrap",
+		  "waste-water",
+		  "glue-water-additive",
+		  "waste-paper",
+		  "binding-supply",
+		  "banding-supply",
+		  "stitching-wire",
+		  "shrink-wrap",
+		  "paper-wrap",
 		  "staples",
 		  "inserts",
 		  "covers"
@@ -561,20 +567,20 @@ backend_init_supplies(
    /*
     * Yes, read the cache file:
     *
-    *     2 num_supplies charset
+    *     3 num_supplies charset
     *     device description
     *     supply structures...
     */
 
     if (cupsFileGets(cachefile, value, sizeof(value)))
     {
-      if (sscanf(value, "2 %d%d", &num_supplies, &charset) == 2 &&
+      if (sscanf(value, "3 %d%d", &num_supplies, &charset) == 2 &&
           num_supplies <= CUPS_MAX_SUPPLIES &&
           cupsFileGets(cachefile, value, sizeof(value)))
       {
         if (!strcmp(description, value))
 	  cupsFileRead(cachefile, (char *)supplies,
-	               num_supplies * sizeof(backend_supplies_t));
+	               (size_t)num_supplies * sizeof(backend_supplies_t));
         else
 	{
 	  num_supplies = -1;
@@ -664,12 +670,12 @@ backend_init_supplies(
 
   if ((cachefile = cupsFileOpen(cachefilename, "w")) != NULL)
   {
-    cupsFilePrintf(cachefile, "2 %d %d\n", num_supplies, charset);
+    cupsFilePrintf(cachefile, "3 %d %d\n", num_supplies, charset);
     cupsFilePrintf(cachefile, "%s\n", description);
 
     if (num_supplies > 0)
       cupsFileWrite(cachefile, (char *)supplies,
-                    num_supplies * sizeof(backend_supplies_t));
+                    (size_t)num_supplies * sizeof(backend_supplies_t));
 
     cupsFileClose(cachefile);
   }
@@ -682,7 +688,7 @@ backend_init_supplies(
   */
 
   for (i = 0; i < num_supplies; i ++)
-    strcpy(supplies[i].color, "none");
+    strlcpy(supplies[i].color, "none", sizeof(supplies[i].color));
 
   _cupsSNMPWalk(snmp_fd, &current_addr, CUPS_SNMP_VERSION_1,
                 _cupsSNMPDefaultCommunity(), prtMarkerColorantValue,
@@ -697,7 +703,7 @@ backend_init_supplies(
     if (i)
       *ptr++ = ',';
 
-    strcpy(ptr, supplies[i].color);
+    strlcpy(ptr, supplies[i].color, sizeof(value) - (size_t)(ptr - value));
   }
 
   fprintf(stderr, "ATTR: marker-colors=%s\n", value);
@@ -745,9 +751,9 @@ backend_init_supplies(
     type = supplies[i].type;
 
     if (type < CUPS_TC_other || type > CUPS_TC_covers)
-      strcpy(ptr, "unknown");
+      strlcpy(ptr, "unknown", sizeof(value) - (size_t)(ptr - value));
     else
-      strcpy(ptr, types[type - CUPS_TC_other]);
+      strlcpy(ptr, types[type - CUPS_TC_other], sizeof(value) - (size_t)(ptr - value));
   }
 
   fprintf(stderr, "ATTR: marker-types=%s\n", value);
@@ -814,7 +820,7 @@ backend_walk_cb(cups_snmp_t *packet,	/* I - SNMP packet */
 	  if (!_cups_strcasecmp(colors[k][0],
 	                        (char *)packet->object_value.string.bytes))
 	  {
-	    strcpy(supplies[j].color, colors[k][1]);
+	    strlcpy(supplies[j].color, colors[k][1], sizeof(supplies[j].color));
 	    break;
 	  }
       }
@@ -969,6 +975,25 @@ backend_walk_cb(cups_snmp_t *packet,	/* I - SNMP packet */
         packet->object_value.integer > 0)
       supplies[i - 1].max_capacity = packet->object_value.integer;
   }
+  else if (_cupsSNMPIsOIDPrefixed(packet, prtMarkerSuppliesClass))
+  {
+   /*
+    * Get marker class...
+    */
+
+    i = packet->object_name[prtMarkerSuppliesClassOffset];
+    if (i < 1 || i > CUPS_MAX_SUPPLIES ||
+        packet->object_type != CUPS_ASN1_INTEGER)
+      return;
+
+    fprintf(stderr, "DEBUG2: prtMarkerSuppliesClass.1.%d = %d\n", i,
+            packet->object_value.integer);
+
+    if (i > num_supplies)
+      num_supplies = i;
+
+    supplies[i - 1].sclass = packet->object_value.integer;
+  }
   else if (_cupsSNMPIsOIDPrefixed(packet, prtMarkerSuppliesType))
   {
    /*
@@ -1032,9 +1057,9 @@ utf16_to_utf8(
   for (ptr = temp; srcsize >= 2;)
   {
     if (le)
-      ch = src[0] | (src[1] << 8);
+      ch = (cups_utf32_t)(src[0] | (src[1] << 8));
     else
-      ch = (src[0] << 8) | src[1];
+      ch = (cups_utf32_t)((src[0] << 8) | src[1]);
 
     src += 2;
     srcsize -= 2;
@@ -1045,13 +1070,13 @@ utf16_to_utf8(
       * Multi-word UTF-16 char...
       */
 
-      int lch;			/* Lower word */
+      cups_utf32_t lch;			/* Lower word */
 
 
       if (le)
-	lch = src[0] | (src[1] << 8);
+	lch = (cups_utf32_t)(src[0] | (src[1] << 8));
       else
-	lch = (src[0] << 8) | src[1];
+	lch = (cups_utf32_t)((src[0] << 8) | src[1]);
 
       if (lch >= 0xdc00 && lch <= 0xdfff)
       {
@@ -1068,10 +1093,10 @@ utf16_to_utf8(
 
   *ptr = '\0';
 
-  cupsUTF32ToUTF8(dst, temp, dstsize);
+  cupsUTF32ToUTF8(dst, temp, (int)dstsize);
 }
 
 
 /*
- * End of "$Id: snmp-supplies.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: snmp-supplies.c 12227 2014-10-21 13:42:04Z msweet $".
  */

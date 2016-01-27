@@ -1,17 +1,17 @@
 #!/bin/sh
 #
-# "$Id: 5.1-lpadmin.sh 7494 2008-04-25 18:36:46Z mike $"
+# "$Id: 5.1-lpadmin.sh 12393 2014-12-19 15:33:22Z msweet $"
 #
-#   Test the lpadmin command.
+# Test the lpadmin command.
 #
-#   Copyright 2007-2012 by Apple Inc.
-#   Copyright 1997-2005 by Easy Software Products, all rights reserved.
+# Copyright 2007-2013 by Apple Inc.
+# Copyright 1997-2005 by Easy Software Products, all rights reserved.
 #
-#   These coded instructions, statements, and computer programs are the
-#   property of Apple Inc. and are protected by Federal copyright
-#   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
-#   which should have been included with this file.  If this file is
-#   file is missing or damaged, see the license at "http://www.cups.org/".
+# These coded instructions, statements, and computer programs are the
+# property of Apple Inc. and are protected by Federal copyright
+# law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+# which should have been included with this file.  If this file is
+# file is missing or damaged, see the license at "http://www.cups.org/".
 #
 
 echo "Add Printer Test"
@@ -22,7 +22,12 @@ if test $? != 0; then
 	echo "    FAILED"
 	exit 1
 else
-	echo "    PASSED"
+	if test -f $CUPS_SERVERROOT/ppd/Test3.ppd; then
+		echo "    PASSED"
+	else
+		echo "    FAILED (No PPD)"
+		exit 1
+	fi
 fi
 echo ""
 
@@ -52,8 +57,8 @@ echo ""
 
 echo "Add Shared Printer Test"
 echo ""
-echo "    lpadmin -p Test3 -E -v ipp://localhost:8631/printers/Test2 -m raw"
-$VALGRIND ../systemv/lpadmin -p Test3 -E -v ipp://localhost:8631/printers/Test2 -m raw 2>&1
+echo "    lpadmin -p Test3 -E -v ipp://localhost:$IPP_PORT/printers/Test2 -m raw"
+$VALGRIND ../systemv/lpadmin -p Test3 -E -v ipp://localhost:$IPP_PORT/printers/Test2 -m raw 2>&1
 if test $? != 0; then
 	echo "    FAILED"
 	exit 1
@@ -63,5 +68,5 @@ fi
 echo ""
 
 #
-# End of "$Id: 5.1-lpadmin.sh 7494 2008-04-25 18:36:46Z mike $".
+# End of "$Id: 5.1-lpadmin.sh 12393 2014-12-19 15:33:22Z msweet $".
 #

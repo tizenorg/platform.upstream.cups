@@ -1,9 +1,9 @@
 /*
- * "$Id: cupstestppd.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: cupstestppd.c 12583 2015-04-03 00:33:05Z msweet $"
  *
  *   PPD test program for CUPS.
  *
- *   Copyright 2007-2012 by Apple Inc.
+ *   Copyright 2007-2015 by Apple Inc.
  *   Copyright 1997-2007 by Easy Software Products, all rights reserved.
  *
  *   These coded instructions, statements, and computer programs are the
@@ -15,26 +15,6 @@
  *   PostScript is a trademark of Adobe Systems, Inc.
  *
  *   This file is subject to the Apple OS-Developed Software exception.
- *
- * Contents:
- *
- *   main()               - Main entry for test program.
- *   check_basics()       - Check for CR LF, mixed line endings, and blank
- *                          lines.
- *   check_constraints()  - Check UIConstraints in the PPD file.
- *   check_case()         - Check that there are no duplicate groups, options,
- *                          or choices that differ only by case.
- *   check_defaults()     - Check default option keywords in the PPD file.
- *   check_duplex()       - Check duplex keywords in the PPD file.
- *   check_filters()      - Check filters in the PPD file.
- *   check_profiles()     - Check ICC color profiles in the PPD file.
- *   check_sizes()        - Check media sizes in the PPD file.
- *   check_translations() - Check translations in the PPD file.
- *   show_conflicts()     - Show option conflicts in a PPD file.
- *   test_raster()        - Test PostScript commands for raster printers.
- *   usage()              - Show program usage.
- *   valid_path()         - Check whether a path has the correct capitalization.
- *   valid_utf8()         - Check whether a string contains valid UTF-8 text.
  */
 
 /*
@@ -144,7 +124,7 @@ main(int  argc,				/* I - Number of command-line args */
      char *argv[])			/* I - Command-line arguments */
 {
   int		i, j, k, m, n;		/* Looping vars */
-  int		len;			/* Length of option name */
+  size_t	len;			/* Length of option name */
   char		*opt;			/* Option character */
   const char	*ptr;			/* Pointer into string */
   cups_file_t	*fp;			/* PPD file */
@@ -1470,7 +1450,7 @@ main(int  argc,				/* I - Number of command-line args */
 	       k < group->num_options;
 	       k ++, option ++)
 	  {
-	    len = (int)strlen(option->keyword);
+	    len = strlen(option->keyword);
 
 	    for (m = 0, group2 = ppd->groups;
 		 m < ppd->num_groups;
@@ -1479,7 +1459,7 @@ main(int  argc,				/* I - Number of command-line args */
 	           n < group2->num_options;
 		   n ++, option2 ++)
 		if (option != option2 &&
-	            len < (int)strlen(option2->keyword) &&
+	            len < strlen(option2->keyword) &&
 	            !strncmp(option->keyword, option2->keyword, len))
 		{
 		  _cupsLangPrintf(stdout,
@@ -1880,7 +1860,7 @@ check_constraints(ppd_file_t *ppd,	/* I - PPD file */
         if (!_cups_strncasecmp(option, "Custom", 6) && !_cups_strcasecmp(choice, "True"))
 	{
 	  _cups_strcpy(option, option + 6);
-	  strcpy(choice, "Custom");
+	  strlcpy(choice, "Custom", sizeof(choice));
 	}
 
         if ((o = ppdFindOption(ppd, option)) == NULL)
@@ -1981,13 +1961,13 @@ check_constraints(ppd_file_t *ppd,	/* I - PPD file */
       if (!_cups_strncasecmp(c->option1, "Custom", 6) &&
           !_cups_strcasecmp(c->choice1, "True"))
       {
-	strcpy(option, c->option1 + 6);
-	strcpy(choice, "Custom");
+	strlcpy(option, c->option1 + 6, sizeof(option));
+	strlcpy(choice, "Custom", sizeof(choice));
       }
       else
       {
-	strcpy(option, c->option1);
-	strcpy(choice, c->choice1);
+	strlcpy(option, c->option1, sizeof(option));
+	strlcpy(choice, c->choice1, sizeof(choice));
       }
 
       if ((o = ppdFindOption(ppd, option)) == NULL)
@@ -2022,13 +2002,13 @@ check_constraints(ppd_file_t *ppd,	/* I - PPD file */
       if (!_cups_strncasecmp(c->option2, "Custom", 6) &&
           !_cups_strcasecmp(c->choice2, "True"))
       {
-	strcpy(option, c->option2 + 6);
-	strcpy(choice, "Custom");
+	strlcpy(option, c->option2 + 6, sizeof(option));
+	strlcpy(choice, "Custom", sizeof(choice));
       }
       else
       {
-	strcpy(option, c->option2);
-	strcpy(choice, c->choice2);
+	strlcpy(option, c->option2, sizeof(option));
+	strlcpy(choice, c->choice2, sizeof(choice));
       }
 
       if ((o = ppdFindOption(ppd, option)) == NULL)
@@ -2391,8 +2371,40 @@ check_filters(ppd_file_t *ppd,		/* I - PPD file */
 
       if (!warn)
         errors ++;
+
+      continue;
     }
-    else if (strcmp(program, "-"))
+
+    if (!strncmp(program, "maxsize(", 8))
+    {
+      char	*mptr;			/* Pointer into maxsize(nnnn) program */
+
+      strtoll(program + 8, &mptr, 10);
+
+      if (*mptr != ')')
+      {
+	if (!warn && !errors && !verbose)
+	  _cupsLangPuts(stdout, _(" FAIL"));
+
+	if (verbose >= 0)
+	  _cupsLangPrintf(stdout,
+			  _("      %s  Bad cupsFilter value \"%s\"."),
+			  prefix, attr->value);
+
+	if (!warn)
+	  errors ++;
+
+	continue;
+      }
+
+      mptr ++;
+      while (_cups_isspace(*mptr))
+	mptr ++;
+
+      _cups_strcpy(program, mptr);
+    }
+
+    if (strcmp(program, "-"))
     {
       if (program[0] == '/')
 	snprintf(pathprog, sizeof(pathprog), "%s%s", root, program);
@@ -2477,8 +2489,40 @@ check_filters(ppd_file_t *ppd,		/* I - PPD file */
 
       if (!warn)
         errors ++;
+
+      continue;
     }
-    else if (strcmp(program, "-"))
+
+    if (!strncmp(program, "maxsize(", 8))
+    {
+      char	*mptr;			/* Pointer into maxsize(nnnn) program */
+
+      strtoll(program + 8, &mptr, 10);
+
+      if (*mptr != ')')
+      {
+	if (!warn && !errors && !verbose)
+	  _cupsLangPuts(stdout, _(" FAIL"));
+
+	if (verbose >= 0)
+	  _cupsLangPrintf(stdout,
+			  _("      %s  Bad cupsFilter2 value \"%s\"."),
+			  prefix, attr->value);
+
+	if (!warn)
+	  errors ++;
+
+	continue;
+      }
+
+      mptr ++;
+      while (_cups_isspace(*mptr))
+	mptr ++;
+
+      _cups_strcpy(program, mptr);
+    }
+
+    if (strcmp(program, "-"))
     {
       if (strncmp(program, "maxsize(", 8) &&
           (ptr = strchr(program + 8, ')')) != NULL)
@@ -3080,8 +3124,8 @@ check_sizes(ppd_file_t *ppd,		/* I - PPD file */
   const char	*prefix;		/* WARN/FAIL prefix */
   ppd_option_t	*page_size,		/* PageSize option */
 		*page_region;		/* PageRegion option */
-  _pwg_media_t  *pwg_media;             /* PWG media */
-  char          buf[1024];              /* PapeSize name that is supposed to be */
+  _pwg_media_t	*pwg_media;		/* PWG media */
+  char		buf[PPD_MAX_NAME];	/* PapeSize name that is supposed to be */
   const char	*ptr;			/* Pointer into string */
   int		width_2540ths,		/* PageSize width in 2540ths */
 		length_2540ths;		/* PageSize length in 2540ths */
@@ -3210,14 +3254,20 @@ check_sizes(ppd_file_t *ppd,		/* I - PPD file */
     {
       is_ok          = 1;
       width_2540ths  = (size->length > size->width) ?
-                           _PWG_FROMPTS(size->width) :
-			   _PWG_FROMPTS(size->length);
+                           PWG_FROM_POINTS(size->width) :
+			   PWG_FROM_POINTS(size->length);
       length_2540ths = (size->length > size->width) ?
-                           _PWG_FROMPTS(size->length) :
-			   _PWG_FROMPTS(size->width);
-      pwg_media      = _pwgMediaForSize(width_2540ths, length_2540ths);
+                           PWG_FROM_POINTS(size->length) :
+			   PWG_FROM_POINTS(size->width);
+      pwg_media      = pwgMediaForSize(width_2540ths, length_2540ths);
 
-      if (pwg_media && pwg_media->ppd && (pwg_media->ppd[0] < 'a' || pwg_media->ppd[0] > 'z'))
+      if (pwg_media &&
+          (abs(pwg_media->width - width_2540ths) > 34 ||
+           abs(pwg_media->length - length_2540ths) > 34))
+        pwg_media = NULL;		/* Only flag matches within a point */
+
+      if (pwg_media && pwg_media->ppd &&
+          (pwg_media->ppd[0] < 'a' || pwg_media->ppd[0] > 'z'))
       {
         size_t ppdlen = strlen(pwg_media->ppd);
 					/* Length of standard PPD name */
@@ -3232,6 +3282,8 @@ check_sizes(ppd_file_t *ppd,		/* I - PPD file */
             snprintf(buf, sizeof(buf), "%s.Transverse", pwg_media->ppd);
           else
             snprintf(buf, sizeof(buf), "%sRotated", pwg_media->ppd);
+
+	  ppdlen = strlen(buf);
         }
 
         if (size->left == 0 && size->bottom == 0 &&
@@ -3300,7 +3352,7 @@ check_sizes(ppd_file_t *ppd,		/* I - PPD file */
         length_tmp = (fabs(size->length - ceil(size->length)) < 0.1) ?
 	                 ceil(size->length) : size->length;
 
-        if (fmod(width_tmp, 18.0) == 0.0 || fmod(length_tmp, 18.0) == 0.0)
+        if (fmod(width_tmp, 9.0) == 0.0 && fmod(length_tmp, 9.0) == 0.0)
         {
           width_inch  = width_tmp / 72.0;
           length_inch = length_tmp / 72.0;
@@ -3323,14 +3375,26 @@ check_sizes(ppd_file_t *ppd,		/* I - PPD file */
 
         if (_cups_strcasecmp(size->name, buf))
         {
-          size_t buflen = strlen(buf);	/* Length of proposed name */
+          size_t	buflen = strlen(buf);
+          				/* Length of proposed name */
 
           if (_cups_strncasecmp(size->name, buf, buflen) ||
               (strcmp(size->name + buflen, "in") &&
                size->name[buflen] != '.'))
-	    _cupsLangPrintf(stdout,
-			    _("      %s  Size \"%s\" should be \"%s\"."),
-			    prefix, size->name, buf);
+          {
+	    char	altbuf[PPD_MAX_NAME];
+					/* Alternate "wNNNhNNN" name */
+	    size_t	altlen;		/* Length of alternate name */
+
+	    snprintf(altbuf, sizeof(altbuf), "w%.0fh%.0f", size->width,
+	             size->length);
+	    altlen = strlen(altbuf);
+	    if (_cups_strncasecmp(size->name, altbuf, altlen) ||
+	        (size->name[altlen] && size->name[altlen] != '.'))
+	      _cupsLangPrintf(stdout,
+			      _("      %s  Size \"%s\" should be \"%s\"."),
+			      prefix, size->name, buf);
+	  }
         }
       }
     }
@@ -3972,5 +4036,5 @@ valid_utf8(const char *s)		/* I - String to check */
 
 
 /*
- * End of "$Id: cupstestppd.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: cupstestppd.c 12583 2015-04-03 00:33:05Z msweet $".
  */

@@ -1,13 +1,12 @@
 #
-# "$Id: cupsd.conf.in 11173 2013-07-23 12:31:34Z msweet $"
-#
-# Sample configuration file for the CUPS scheduler.  See "man cupsd.conf" for a
+# Configuration file for the CUPS scheduler.  See "man cupsd.conf" for a
 # complete description of this file.
 #
 
 # Log general information in error_log - change "@CUPS_LOG_LEVEL@" to "debug"
 # for troubleshooting...
 LogLevel @CUPS_LOG_LEVEL@
+@CUPS_PAGE_LOG_FORMAT@
 
 # Only listen for connections from the local machine.
 Listen localhost:@DEFAULT_IPP_PORT@
@@ -35,6 +34,13 @@ WebInterface @CUPS_WEBIF@
 
 # Restrict access to configuration files...
 <Location /admin/conf>
+  AuthType Default
+  Require user @SYSTEM
+  Order allow,deny
+</Location>
+
+# Restrict access to log files...
+<Location /admin/log>
   AuthType Default
   Require user @SYSTEM
   Order allow,deny
@@ -128,7 +134,3 @@ WebInterface @CUPS_WEBIF@
     Order deny,allow
   </Limit>
 </Policy>
-
-#
-# End of "$Id: cupsd.conf.in 11173 2013-07-23 12:31:34Z msweet $".
-#

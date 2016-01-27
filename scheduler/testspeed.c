@@ -1,23 +1,16 @@
 /*
- * "$Id: testspeed.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: testspeed.c 11558 2014-02-06 18:33:34Z msweet $"
  *
- *   Scheduler speed test for CUPS.
+ * Scheduler speed test for CUPS.
  *
- *   Copyright 2007-2010 by Apple Inc.
- *   Copyright 1997-2005 by Easy Software Products.
+ * Copyright 2007-2014 by Apple Inc.
+ * Copyright 1997-2005 by Easy Software Products.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
- *
- * Contents:
- *
- *   main()    - Send multiple IPP requests and report on the average response
- *               time.
- *   do_test() - Run a test on a specific host...
- *   usage()   - Show program usage...
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 /*
@@ -39,7 +32,7 @@
 
 static int	do_test(const char *server, int port,
 		        http_encryption_t encryption, int requests,
-			int verbose);
+			const char *opstring, int verbose);
 static void	usage(void) __attribute__((noreturn));
 
 
@@ -66,6 +59,7 @@ main(int  argc,				/* I - Number of command-line arguments */
 		end;			/* End time */
   double	elapsed;		/* Elapsed time */
   int		verbose;		/* Verbosity */
+  const char	*opstring;		/* Operation name */
 
 
  /*
@@ -78,6 +72,7 @@ main(int  argc,				/* I - Number of command-line arguments */
   port       = ippPort();
   encryption = HTTP_ENCRYPT_IF_REQUESTED;
   verbose    = 0;
+  opstring   = NULL;
 
   for (i = 1; i < argc; i ++)
     if (argv[i][0] == '-')
@@ -85,6 +80,10 @@ main(int  argc,				/* I - Number of command-line arguments */
       for (ptr = argv[i] + 1; *ptr; ptr ++)
         switch (*ptr)
 	{
+	  case 'E' : /* Enable encryption */
+	      encryption = HTTP_ENCRYPT_REQUIRED;
+	      break;
+
 	  case 'c' : /* Number of children */
 	      i ++;
 	      if (i >= argc)
@@ -93,16 +92,20 @@ main(int  argc,				/* I - Number of command-line arguments */
 	      children = atoi(argv[i]);
 	      break;
 
+          case 'o' : /* Operation */
+	      i ++;
+	      if (i >= argc)
+		usage();
+
+	      opstring = argv[i];
+	      break;
+
           case 'r' : /* Number of requests */
 	      i ++;
 	      if (i >= argc)
 		usage();
 
 	      requests = atoi(argv[i]);
-	      break;
-
-	  case 'E' : /* Enable encryption */
-	      encryption = HTTP_ENCRYPT_REQUIRED;
 	      break;
 
           case 'v' : /* Verbose logging */
@@ -139,9 +142,10 @@ main(int  argc,				/* I - Number of command-line arguments */
   start = time(NULL);
 
   if (children < 1)
-    return (do_test(server, port, encryption, requests, verbose));
+    return (do_test(server, port, encryption, requests, opstring, verbose));
   else if (children == 1)
-    good_children = do_test(server, port, encryption, requests, verbose) ? 0 : 1;
+    good_children = do_test(server, port, encryption, requests, opstring,
+                            verbose) ? 0 : 1;
   else
   {
     char	options[255],		/* Command-line options for child */
@@ -174,7 +178,12 @@ main(int  argc,				/* I - Number of command-line arguments */
 	* Child goes here...
 	*/
 
-        execlp(argv[0], argv[0], options, "0", reqstr, serverstr, (char *)NULL);
+        if (opstring)
+	  execlp(argv[0], argv[0], options, "0", reqstr, "-o", opstring,
+	         serverstr, (char *)NULL);
+        else
+	  execlp(argv[0], argv[0], options, "0", reqstr, serverstr, (char *)NULL);
+
 	exit(errno);
       }
       else if (pid < 0)
@@ -237,6 +246,7 @@ do_test(const char        *server,	/* I - Server to use */
         int               port,		/* I - Port number to use */
         http_encryption_t encryption,	/* I - Encryption to use */
 	int               requests,	/* I - Number of requests to send */
+	const char        *opstring,	/* I - Operation string */
 	int               verbose)	/* I - Verbose output? */
 {
   int		i;			/* Looping var */
@@ -247,9 +257,10 @@ do_test(const char        *server,	/* I - Server to use */
   double	reqtime,		/* Time for this request */
 		elapsed;		/* Elapsed time */
   int		op;			/* Current operation */
-  static ipp_op_t ops[4] =		/* Operations to test... */
+  static ipp_op_t ops[5] =		/* Operations to test... */
 		{
 		  IPP_PRINT_JOB,
+		  CUPS_GET_DEFAULT,
 		  CUPS_GET_PRINTERS,
 		  CUPS_GET_CLASSES,
 		  IPP_GET_JOBS
@@ -282,7 +293,11 @@ do_test(const char        *server,	/* I - Server to use */
     * In addition, IPP_GET_JOBS needs a printer-uri attribute.
     */
 
-    op      = ops[i & 3];
+    if (opstring)
+      op = ippOpValue(opstring);
+    else
+      op = ops[i % (int)(sizeof(ops) / sizeof(ops[0]))];
+
     request = ippNewRequest(op);
 
     gettimeofday(&start, NULL);
@@ -353,13 +368,13 @@ do_test(const char        *server,	/* I - Server to use */
 static void
 usage(void)
 {
-  puts("Usage: testspeed [-c children] [-h] [-r requests] [-v] [-E] "
-       "hostname[:port]");
+  puts("Usage: testspeed [-c children] [-h] [-o operation] [-r requests] [-v] "
+       "[-E] hostname[:port]");
   exit(0);
 }
 
 
 
 /*
- * End of "$Id: testspeed.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: testspeed.c 11558 2014-02-06 18:33:34Z msweet $".
  */

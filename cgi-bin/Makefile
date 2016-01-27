@@ -1,16 +1,16 @@
 #
-# "$Id: Makefile 11173 2013-07-23 12:31:34Z msweet $"
+# "$Id: Makefile 12519 2015-02-17 13:10:19Z msweet $"
 #
-#   CGI makefile for CUPS.
+# CGI makefile for CUPS.
 #
-#   Copyright 2007-2012 by Apple Inc.
-#   Copyright 1997-2006 by Easy Software Products.
+# Copyright 2007-2014 by Apple Inc.
+# Copyright 1997-2006 by Easy Software Products.
 #
-#   These coded instructions, statements, and computer programs are the
-#   property of Apple Inc. and are protected by Federal copyright
-#   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
-#   which should have been included with this file.  If this file is
-#   file is missing or damaged, see the license at "http://www.cups.org/".
+# These coded instructions, statements, and computer programs are the
+# property of Apple Inc. and are protected by Federal copyright
+# law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+# which should have been included with this file.  If this file is
+# file is missing or damaged, see the license at "http://www.cups.org/".
 #
 
 include ../Makedefs
@@ -32,8 +32,7 @@ OBJS	=	\
 		printers.o \
 		testcgi.o \
 		testhi.o \
-		testtemplate.o \
-		websearch.o
+		testtemplate.o
 CGIS	=	\
 		admin.cgi \
 		classes.cgi \
@@ -42,8 +41,7 @@ CGIS	=	\
 		printers.cgi
 LIBTARGETS =	\
 		libcupscgi.a \
-		$(LIBCUPSCGI) \
-		websearch
+		$(LIBCUPSCGI)
 
 UNITTARGETS =	\
 		testcgi \
@@ -82,7 +80,7 @@ unittests:	$(UNITTARGETS)
 
 clean:
 	$(RM) $(OBJS) $(TARGETS) $(UNITTARGETS) makedocset
-	$(RM) libcupscgi.so libcupscgi.sl libcupscgi.dylib
+	$(RM) libcupscgi.so libcupscgi.dylib
 
 
 #
@@ -120,6 +118,7 @@ install-exec:
 		$(INSTALL_DIR) $(SYMROOT); \
 		for file in $(CGIS); do \
 			cp $$file $(SYMROOT); \
+			dsymutil $(SYMROOT)/$$file; \
 		done \
 	fi
 
@@ -143,7 +142,7 @@ install-libs: $(INSTALLSTATIC)
 	echo Installing libraries in $(LIBDIR)...
 	$(INSTALL_DIR) -m 755 $(LIBDIR)
 	$(INSTALL_LIB) $(LIBCUPSCGI) $(LIBDIR)
-	if test $(LIBCUPSCGI) = "libcupscgi.so.1" -o $(LIBCUPSCGI) = "libcupscgi.sl.1"; then \
+	if test $(LIBCUPSCGI) = "libcupscgi.so.1"; then \
 		$(RM) $(LIBDIR)/`basename $(LIBCUPSCGI) .1`; \
 		$(LN) $(LIBCUPSCGI) $(LIBDIR)/`basename $(LIBCUPSCGI) .1`; \
 	fi
@@ -154,6 +153,7 @@ install-libs: $(INSTALLSTATIC)
 	if test "x$(SYMROOT)" != "x"; then \
 		$(INSTALL_DIR) $(SYMROOT); \
 		cp $(LIBCUPSCGI) $(SYMROOT); \
+		dsymutil $(SYMROOT)/$(LIBCUPSCGI); \
 	fi
 
 installstatic:
@@ -175,9 +175,6 @@ uninstall:
 	$(RM) $(LIBDIR)/libcupscgi.1.dylib
 	$(RM) $(LIBDIR)/libcupscgi.a
 	$(RM) $(LIBDIR)/libcupscgi.dylib
-	$(RM) $(LIBDIR)/libcupscgi_s.a
-	$(RM) $(LIBDIR)/libcupscgi.sl
-	$(RM) $(LIBDIR)/libcupscgi.sl.1
 	$(RM) $(LIBDIR)/libcupscgi.so
 	$(RM) $(LIBDIR)/libcupscgi.so.1
 	-$(RMDIR) $(LIBDIR)
@@ -209,10 +206,10 @@ framedhelp:
 
 
 #
-# libcupscgi.so.1, libcupscgi.sl.1
+# libcupscgi.so.1
 #
 
-libcupscgi.so.1 libcupscgi.sl.1:	$(LIBOBJS)
+libcupscgi.so.1:	$(LIBOBJS)
 	echo Linking $@...
 	$(DSO) $(ARCHFLAGS) $(DSOFLAGS) -o $@ $(LIBOBJS) $(LIBS)
 	$(RM) `basename $@ .1`
@@ -233,17 +230,6 @@ libcupscgi.1.dylib:	$(LIBOBJS) libcupscgi.exp
 		$(LIBOBJS) $(LIBS)
 	$(RM) libcupscgi.dylib
 	$(LN) $@ libcupscgi.dylib
-
-
-#
-# libcupscgi_s.a
-#
-
-libcupscgi_s.a:	$(LIBOBJS)
-	echo Creating $@...
-	$(DSO) $(DSOFLAGS) -o libcupscgi_s.o $(LIBOBJS) $(LIBS)
-	$(RM) $@
-	$(AR) $(ARFLAGS) $@ libcupscgi_s.o
 
 
 #
@@ -360,17 +346,6 @@ testtemplate:	testtemplate.o ../Makedefs libcupscgi.a ../cups/$(LIBCUPSSTATIC)
 
 
 #
-# websearch
-#
-
-websearch:	websearch.o ../Makedefs libcupscgi.a ../cups/$(LIBCUPSSTATIC)
-	echo Linking $@...
-	$(CC) $(ARCHFLAGS) $(LDFLAGS) -o $@ websearch.o libcupscgi.a \
-		../cups/$(LIBCUPSSTATIC) $(COMMONLIBS) $(SSLLIBS) $(DNSSDLIBS) \
-		$(LIBZ) $(LIBGSSAPI)
-
-
-#
 # Dependencies...
 #
 
@@ -378,5 +353,5 @@ include Dependencies
 
 
 #
-# End of "$Id: Makefile 11173 2013-07-23 12:31:34Z msweet $".
+# End of "$Id: Makefile 12519 2015-02-17 13:10:19Z msweet $".
 #

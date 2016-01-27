@@ -1,35 +1,15 @@
 /*
- * "$Id: usb-libusb.c 11173 2013-07-23 12:31:34Z msweet $"
+ * "$Id: usb-libusb.c 12881 2015-09-15 21:20:02Z msweet $"
  *
- *   LIBUSB interface code for CUPS.
+ * LIBUSB interface code for CUPS.
  *
- *   Copyright 2007-2013 by Apple Inc.
+ * Copyright 2007-2015 by Apple Inc.
  *
- *   These coded instructions, statements, and computer programs are the
- *   property of Apple Inc. and are protected by Federal copyright
- *   law.  Distribution and use rights are outlined in the file "LICENSE.txt"
- *   which should have been included with this file.  If this file is
- *   file is missing or damaged, see the license at "http://www.cups.org/".
- *
- * Contents:
- *
- *   list_devices()	  - List the available printers.
- *   print_device()	  - Print a file to a USB device.
- *   close_device()	  - Close the connection to the USB printer.
- *   compare_quirks()	  - Compare two quirks entries.
- *   find_device()	  - Find or enumerate USB printers.
- *   find_quirks()	  - Find the quirks for the given printer, if any.
- *   get_device_id()	  - Get the IEEE-1284 device ID for the printer.
- *   list_cb()		  - List USB printers for discovery.
- *   load_quirks()	  - Load all quirks files in the /usr/share/cups/usb
- *			    directory.
- *   make_device_uri()	  - Create a device URI for a USB printer.
- *   open_device()	  - Open a connection to the USB printer.
- *   print_cb() 	  - Find a USB printer for printing.
- *   read_thread()	  - Thread to read the backchannel data on.
- *   sidechannel_thread() - Handle side-channel requests.
- *   soft_reset()	  - Send a soft reset to the device.
- *   soft_reset_printer() - Do the soft reset request specific to printers
+ * These coded instructions, statements, and computer programs are the
+ * property of Apple Inc. and are protected by Federal copyright
+ * law.  Distribution and use rights are outlined in the file "LICENSE.txt"
+ * which should have been included with this file.  If this file is
+ * file is missing or damaged, see the license at "http://www.cups.org/".
  */
 
 /*
@@ -123,6 +103,7 @@ typedef struct usb_globals_s		/* Global USB printer information */
 #define USB_QUIRK_USB_INIT	0x0010	/* Needs vendor USB init string */
 #define USB_QUIRK_VENDOR_CLASS	0x0020	/* Descriptor uses vendor-specific
 					   Class or SubClass */
+#define USB_QUIRK_DELAY_CLOSE	0x0040	/* Delay close */
 #define USB_QUIRK_WHITELIST	0x0000	/* no quirks */
 
 
@@ -496,7 +477,7 @@ print_device(const char *uri,		/* I - Device URI */
 	iostatus = libusb_bulk_transfer(g.printer->handle,
 					g.printer->write_endp,
 					print_buffer, g.print_bytes,
-					&bytes, 60000);
+					&bytes, 0);
        /*
 	* Ignore timeout errors, but retain the number of bytes written to
 	* avoid sending duplicate data...
@@ -519,7 +500,7 @@ print_device(const char *uri,		/* I - Device URI */
 	  iostatus = libusb_bulk_transfer(g.printer->handle,
 					  g.printer->write_endp,
 					  print_buffer, g.print_bytes,
-					  &bytes, 60000);
+					  &bytes, 0);
 	}
 
        /*
@@ -534,7 +515,7 @@ print_device(const char *uri,		/* I - Device URI */
 	  iostatus = libusb_bulk_transfer(g.printer->handle,
 					  g.printer->write_endp,
 					  print_buffer, g.print_bytes,
-					  &bytes, 60000);
+					  &bytes, 0);
         }
 
 	if (iostatus)
@@ -660,6 +641,9 @@ print_device(const char *uri,		/* I - Device URI */
  /*
   * Close the connection and input file and general clean up...
   */
+
+  if (g.printer->quirks & USB_QUIRK_DELAY_CLOSE)
+    sleep(1);
 
   close_device(g.printer);
 
@@ -920,8 +904,8 @@ find_device(usb_cb_t   cb,		/* I - Callback function */
 	      fprintf(stderr, "DEBUG: Printer does not report class 7 and/or "
 		      "subclass 1 but works as a printer anyway\n");
 
-	    read_endp  = -1;
-	    write_endp = -1;
+	    read_endp  = 0xff;
+	    write_endp = 0xff;
 
 	    for (endp = 0, endpptr = altptr->endpoint;
 	         endp < altptr->bNumEndpoints;
@@ -935,7 +919,7 @@ find_device(usb_cb_t   cb,		/* I - Callback function */
 		  write_endp = endp;
 	      }
 
-            if (write_endp >= 0)
+            if (write_endp != 0xff)
 	    {
 	     /*
 	      * Save the best match so far...
@@ -1085,8 +1069,7 @@ get_device_id(usb_printer_t *printer,	/* I - Printer */
   * bytes.  The 1284 spec says the length is stored MSB first...
   */
 
-  length = (((unsigned)buffer[0] & 255) << 8) |
-	   ((unsigned)buffer[1] & 255);
+  length = (int)((((unsigned)buffer[0] & 255) << 8) | ((unsigned)buffer[1] & 255));
 
  /*
   * Check to see if the length is larger than our buffer or less than 14 bytes
@@ -1097,8 +1080,7 @@ get_device_id(usb_printer_t *printer,	/* I - Printer */
   */
 
   if (length > bufsize || length < 14)
-    length = (((unsigned)buffer[1] & 255) << 8) |
-	     ((unsigned)buffer[0] & 255);
+    length = (int)((((unsigned)buffer[1] & 255) << 8) | ((unsigned)buffer[0] & 255));
 
   if (length > bufsize)
     length = bufsize;
@@ -1120,7 +1102,7 @@ get_device_id(usb_printer_t *printer,	/* I - Printer */
   * nul-terminate.
   */
 
-  memmove(buffer, buffer + 2, length);
+  memmove(buffer, buffer + 2, (size_t)length);
   buffer[length] = '\0';
 
   return (0);
@@ -1232,6 +1214,9 @@ load_quirks(void)
 
       if (strstr(line, " blacklist"))
         quirk->quirks |= USB_QUIRK_BLACKLIST;
+
+      if (strstr(line, " delay-close"))
+        quirk->quirks |= USB_QUIRK_DELAY_CLOSE;
 
       if (strstr(line, " no-reattach"))
         quirk->quirks |= USB_QUIRK_NO_REATTACH;
@@ -1473,9 +1458,14 @@ open_device(usb_printer_t *printer,	/* I - Printer */
   else
   {
     printer->usblp_attached = 0;
-    fprintf(stderr, "DEBUG: Failed to check whether %04x:%04x has the \"usblp\" kernel module attached\n",
-	      devdesc.idVendor, devdesc.idProduct);
-    goto error;
+
+    if (errcode != LIBUSB_ERROR_NOT_SUPPORTED)
+    {
+      fprintf(stderr,
+              "DEBUG: Failed to check whether %04x:%04x has the \"usblp\" "
+              "kernel module attached\n", devdesc.idVendor, devdesc.idProduct);
+      goto error;
+    }
   }
 
  /*
@@ -1539,6 +1529,16 @@ open_device(usb_printer_t *printer,	/* I - Printer */
 
       goto error;
     }
+    else if ((errcode = libusb_detach_kernel_driver(printer->handle, printer->iface)) < 0)
+    {
+      fprintf(stderr,
+              "DEBUG: Failed to detach \"usblp\" module from %04x:%04x\n",
+              devdesc.idVendor, devdesc.idProduct);
+
+      goto error;
+    }
+
+    sleep (1);
   }
 
  /*
@@ -1734,7 +1734,7 @@ static void *read_thread(void *reference)
     {
       fprintf(stderr, "DEBUG: Read %d bytes of back-channel data...\n",
               (int)rbytes);
-      cupsBackChannelWrite((const char *)readbuffer, rbytes, 1.0);
+      cupsBackChannelWrite((const char *)readbuffer, (size_t)rbytes, 1.0);
     }
     else if (readstatus == LIBUSB_ERROR_TIMEOUT)
       fputs("DEBUG: Got USB transaction timeout during read.\n", stderr);
@@ -2021,6 +2021,6 @@ soft_reset_printer(
 
 
 /*
- * End of "$Id: usb-libusb.c 11173 2013-07-23 12:31:34Z msweet $".
+ * End of "$Id: usb-libusb.c 12881 2015-09-15 21:20:02Z msweet $".
  */
 
