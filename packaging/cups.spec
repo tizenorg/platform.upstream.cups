@@ -43,17 +43,20 @@
 %{?_with_systemd: %define _systemd --enable-systemd}
 %{!?_with_systemd: %define _systemd --disable-systemd}
 
-Summary: CUPS
-Name: cups
-Version: 2.1.2
-Release: 1
-Epoch: 1
-License: GPL
-Group: System Environment/Daemons
-Source: http://www.cups.org/software/2.1.2/cups-2.1.2-source.tar.bz2
-Url: http://www.cups.org
+Summary:  CUPS
+Name:     cups
+Version:  2.1.2
+Release:  1
+Epoch:    1
+License:  GPL-2.0+ and LGPL-2.1+
+Group:    System/Utilities
+Source:   http://www.cups.org/software/2.1.2/cups-2.1.2-source.tar.bz2
+Url:      http://www.cups.org
 Packager: Anonymous <anonymous@foo.com>
-Vendor: Apple Inc.
+Vendor:   Apple Inc.
+
+Source101:  cups.manifest
+Source1001: %{name}-rpmlintrc
 
 # Package names are as defined for Red Hat (and clone) distributions
 BuildRequires: gnutls-devel, pam-devel
@@ -77,6 +80,7 @@ BuildRequires: systemd-devel
 # Use buildroot so as not to disturb the version already installed
 BuildRoot: /tmp/%{name}-root
 
+
 # Dependencies...
 Requires: %{name}-libs = %{epoch}:%{version}
 Obsoletes: lpd, lpr, LPRng
@@ -87,17 +91,14 @@ Obsoletes: cups-pt, cups-ru, cups-sv, cups-zh
 
 %package devel
 Summary: CUPS - development environment
-Group: Development/Libraries
 Requires: %{name}-libs = %{epoch}:%{version}
 
 %package libs
 Summary: CUPS - shared libraries
-Group: System Environment/Libraries
 Provides: libcups1
 
 %package lpd
 Summary: CUPS - LPD support
-Group: System Environment/Daemons
 Requires: %{name} = %{epoch}:%{version} xinetd
 
 %description
@@ -115,6 +116,7 @@ This package provides LPD client support.
 
 %prep
 %setup
+cp %{SOURCE101} .
 
 %build
 CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" LDFLAGS="$RPM_OPT_FLAGS" \
@@ -126,8 +128,10 @@ make
 # Make sure the RPM_BUILD_ROOT directory exists.
 rm -rf $RPM_BUILD_ROOT
 
-make BUILDROOT=$RPM_BUILD_ROOT install
+make DSTROOT=$RPM_BUILD_ROOT install
 rm -rf $RPM_BUILD_ROOT/usr/share/cups/banners $RPM_BUILD_ROOT/usr/share/cups/data
+
+%remove_docs
 
 %post
 /sbin/chkconfig --add cups
@@ -161,8 +165,10 @@ fi
 rm -rf $RPM_BUILD_ROOT
 
 %files
-%docdir /usr/share/doc/cups
+#%docdir /usr/share/doc/cups
 %defattr(-,root,root)
+%license LICENSE.txt
+%manifest %{name}.manifest
 %dir /etc/cups
 %config(noreplace) /etc/cups/*.conf
 /etc/cups/cups-files.conf.default
@@ -247,40 +253,40 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/cups/usb/*
 %endif
 
-%dir /usr/share/doc/cups
-/usr/share/doc/cups/*.*
-%dir /usr/share/doc/cups/help
-/usr/share/doc/cups/help/accounting.html
-/usr/share/doc/cups/help/cgi.html
-/usr/share/doc/cups/help/glossary.html
-/usr/share/doc/cups/help/kerberos.html
-/usr/share/doc/cups/help/license.html
-/usr/share/doc/cups/help/man-*.html
-/usr/share/doc/cups/help/network.html
-/usr/share/doc/cups/help/options.html
-/usr/share/doc/cups/help/overview.html
-/usr/share/doc/cups/help/policies.html
-/usr/share/doc/cups/help/ref-*.html
-/usr/share/doc/cups/help/security.html
-/usr/share/doc/cups/help/sharing.html
-/usr/share/doc/cups/help/translation.html
-%dir /usr/share/doc/cups/images
-/usr/share/doc/cups/images/*
+#%dir /usr/share/doc/cups
+#/usr/share/doc/cups/*.*
+#%dir /usr/share/doc/cups/help
+#/usr/share/doc/cups/help/accounting.html
+#/usr/share/doc/cups/help/cgi.html
+#/usr/share/doc/cups/help/glossary.html
+#/usr/share/doc/cups/help/kerberos.html
+#/usr/share/doc/cups/help/license.html
+#/usr/share/doc/cups/help/man-*.html
+#/usr/share/doc/cups/help/network.html
+#/usr/share/doc/cups/help/options.html
+#/usr/share/doc/cups/help/overview.html
+#/usr/share/doc/cups/help/policies.html
+#/usr/share/doc/cups/help/ref-*.html
+#/usr/share/doc/cups/help/security.html
+#/usr/share/doc/cups/help/sharing.html
+#/usr/share/doc/cups/help/translation.html
+#%dir /usr/share/doc/cups/images
+#/usr/share/doc/cups/images/*
 
 #%dir /usr/share/doc/cups/ca
 #/usr/share/doc/cups/ca/*
 #%dir /usr/share/doc/cups/cs
 #/usr/share/doc/cups/cs/*
-%dir /usr/share/doc/cups/de
-/usr/share/doc/cups/de/*
-%dir /usr/share/doc/cups/es
-/usr/share/doc/cups/es/*
+#%dir /usr/share/doc/cups/de
+#/usr/share/doc/cups/de/*
+#%dir /usr/share/doc/cups/es
+#/usr/share/doc/cups/es/*
 #%dir /usr/share/doc/cups/fr
 #/usr/share/doc/cups/fr/*
-%dir /usr/share/doc/cups/ja
-/usr/share/doc/cups/ja/*
-%dir /usr/share/doc/cups/ru
-/usr/share/doc/cups/ru/*
+#%dir /usr/share/doc/cups/ja
+#/usr/share/doc/cups/ja/*
+#%dir /usr/share/doc/cups/ru
+#/usr/share/doc/cups/ru/*
 
 %dir /usr/share/locale/ca
 /usr/share/locale/ca/cups_ca.po
@@ -299,44 +305,44 @@ rm -rf $RPM_BUILD_ROOT
 %dir /usr/share/locale/ru
 /usr/share/locale/ru/cups_ru.po
 
-%dir /usr/share/man/man1
-/usr/share/man/man1/cancel.1.gz
-/usr/share/man/man1/cups.1.gz
-/usr/share/man/man1/cupstestdsc.1.gz
-/usr/share/man/man1/cupstestppd.1.gz
-/usr/share/man/man1/ippfind.1.gz
-/usr/share/man/man1/ipptool.1.gz
-/usr/share/man/man1/lp.1.gz
-/usr/share/man/man1/lpoptions.1.gz
-/usr/share/man/man1/lpq.1.gz
-/usr/share/man/man1/lpr.1.gz
-/usr/share/man/man1/lprm.1.gz
-/usr/share/man/man1/lpstat.1.gz
-%dir /usr/share/man/man5
-/usr/share/man/man5/*.conf.5.gz
-/usr/share/man/man5/cupsd-logs.5.gz
-/usr/share/man/man5/ipptoolfile.5.gz
-/usr/share/man/man5/mime.*.5.gz
-%dir /usr/share/man/man8
-/usr/share/man/man8/accept.8.gz
-/usr/share/man/man8/cups-deviced.8.gz
-/usr/share/man/man8/cups-driverd.8.gz
-/usr/share/man/man8/cups-exec.8.gz
-/usr/share/man/man8/cups-snmp.8.gz
-/usr/share/man/man8/cupsaddsmb.8.gz
-/usr/share/man/man8/cupsaccept.8.gz
-/usr/share/man/man8/cupsctl.8.gz
-/usr/share/man/man8/cupsfilter.8.gz
-/usr/share/man/man8/cupsd.8.gz
-/usr/share/man/man8/cupsd-helper.8.gz
-/usr/share/man/man8/cupsdisable.8.gz
-/usr/share/man/man8/cupsenable.8.gz
-/usr/share/man/man8/cupsreject.8.gz
-/usr/share/man/man8/lpadmin.8.gz
-/usr/share/man/man8/lpc.8.gz
-/usr/share/man/man8/lpinfo.8.gz
-/usr/share/man/man8/lpmove.8.gz
-/usr/share/man/man8/reject.8.gz
+#%dir /usr/share/man/man1
+#/usr/share/man/man1/cancel.1.gz
+#/usr/share/man/man1/cups.1.gz
+#/usr/share/man/man1/cupstestdsc.1.gz
+#/usr/share/man/man1/cupstestppd.1.gz
+#/usr/share/man/man1/ippfind.1.gz
+#/usr/share/man/man1/ipptool.1.gz
+#/usr/share/man/man1/lp.1.gz
+#/usr/share/man/man1/lpoptions.1.gz
+#/usr/share/man/man1/lpq.1.gz
+#/usr/share/man/man1/lpr.1.gz
+#/usr/share/man/man1/lprm.1.gz
+#/usr/share/man/man1/lpstat.1.gz
+#%dir /usr/share/man/man5
+#/usr/share/man/man5/*.conf.5.gz
+#/usr/share/man/man5/cupsd-logs.5.gz
+#/usr/share/man/man5/ipptoolfile.5.gz
+#/usr/share/man/man5/mime.*.5.gz
+#%dir /usr/share/man/man8
+#/usr/share/man/man8/accept.8.gz
+#/usr/share/man/man8/cups-deviced.8.gz
+#/usr/share/man/man8/cups-driverd.8.gz
+#/usr/share/man/man8/cups-exec.8.gz
+#/usr/share/man/man8/cups-snmp.8.gz
+#/usr/share/man/man8/cupsaddsmb.8.gz
+#/usr/share/man/man8/cupsaccept.8.gz
+#/usr/share/man/man8/cupsctl.8.gz
+#/usr/share/man/man8/cupsfilter.8.gz
+#/usr/share/man/man8/cupsd.8.gz
+#/usr/share/man/man8/cupsd-helper.8.gz
+#/usr/share/man/man8/cupsdisable.8.gz
+#/usr/share/man/man8/cupsenable.8.gz
+#/usr/share/man/man8/cupsreject.8.gz
+#/usr/share/man/man8/lpadmin.8.gz
+#/usr/share/man/man8/lpc.8.gz
+#/usr/share/man/man8/lpinfo.8.gz
+#/usr/share/man/man8/lpmove.8.gz
+#/usr/share/man/man8/reject.8.gz
 
 %dir /var/cache/cups
 %attr(0775,root,sys) %dir /var/cache/cups/rss
@@ -348,20 +354,21 @@ rm -rf $RPM_BUILD_ROOT
 
 # Desktop files
 /usr/share/applications/*
-/usr/share/icons/*
+#/usr/share/icons/*
 
 %files devel
 %defattr(-,root,root)
+%manifest %{name}.manifest
 %dir /usr/share/cups/examples
 /usr/share/cups/examples/*
-%dir /usr/share/man/man1
-/usr/share/man/man1/cups-config.1.gz
-/usr/share/man/man1/ppd*.1.gz
-%dir /usr/share/man/man5
-/usr/share/man/man5/ppdcfile.5.gz
-/usr/share/man/man7/backend.7.gz
-/usr/share/man/man7/filter.7.gz
-/usr/share/man/man7/notifier.7.gz
+#%dir /usr/share/man/man1
+#/usr/share/man/man1/cups-config.1.gz
+#/usr/share/man/man1/ppd*.1.gz
+#%dir /usr/share/man/man5
+#/usr/share/man/man5/ppdcfile.5.gz
+#/usr/share/man/man7/backend.7.gz
+#/usr/share/man/man7/filter.7.gz
+#/usr/share/man/man7/notifier.7.gz
 
 /usr/bin/cups-config
 /usr/bin/ppd*
@@ -373,19 +380,21 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib*/*.a
 %endif
 
-%dir /usr/share/doc/cups/help
-/usr/share/doc/cups/help/api*.html
-/usr/share/doc/cups/help/postscript-driver.html
-/usr/share/doc/cups/help/ppd-compiler.html
-/usr/share/doc/cups/help/raster-driver.html
-/usr/share/doc/cups/help/spec*.html
+#%dir /usr/share/doc/cups/help
+#/usr/share/doc/cups/help/api*.html
+#/usr/share/doc/cups/help/postscript-driver.html
+#/usr/share/doc/cups/help/ppd-compiler.html
+#/usr/share/doc/cups/help/raster-driver.html
+#/usr/share/doc/cups/help/spec*.html
 
 %files libs
 %defattr(-,root,root)
+%manifest %{name}.manifest
 /usr/lib*/*.so.*
 
 %files lpd
 %defattr(-,root,root)
+%manifest %{name}.manifest
 %if %{?_with_systemd:1}%{!?_with_systemd:0}
 # SystemD
 /usr/lib/systemd/system/org.cups.cups-lpd*
@@ -397,8 +406,8 @@ rm -rf $RPM_BUILD_ROOT
 %dir /usr/lib/cups
 %dir /usr/lib/cups/daemon
 /usr/lib/cups/daemon/cups-lpd
-%dir /usr/share/man/man8
-/usr/share/man/man8/cups-lpd.8.gz
+#%dir /usr/share/man/man8
+#/usr/share/man/man8/cups-lpd.8.gz
 
 
 #
