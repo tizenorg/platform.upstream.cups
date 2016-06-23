@@ -18,7 +18,7 @@
 # Conditional build options (--with name/--without name):
 #
 #   dbus     - Enable/disable DBUS support (default = enable)
-#   dnssd    - Enable/disable DNS-SD support (default = enable)
+#   dnssd    - Enable/disable DNS-SD support (default = disable)
 #   libusb1  - Enable/disable LIBUSB 1.0 support (default = enable)
 #   static   - Enable/disable static libraries (default = enable)
 #   systemd  - Enable/disable systemd support (default = enable)
@@ -27,6 +27,7 @@
 %{?_with_dbus: %define _dbus --enable-dbus}
 %{!?_with_dbus: %define _dbus --disable-dbus}
 
+%define _without_dnssd 1
 %{!?_with_dnssd: %{!?_without_dnssd: %define _with_dnssd --with-dnssd}}
 %{?_with_dnssd: %define _dnssd --enable-dnssd}
 %{!?_with_dnssd: %define _dnssd --disable-dnssd}
@@ -203,7 +204,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/bin/cancel
 /usr/bin/cupstestdsc
 /usr/bin/cupstestppd
-/usr/bin/ippfind
+#/usr/bin/ippfind
 /usr/bin/ipptool
 /usr/bin/lp*
 %dir /usr/lib/cups
